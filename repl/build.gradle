@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.terna'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':common')
+}
+
+task buildRepl(type: Jar) {
+	manifest {
+        attributes 'Main-Class': 'dev.terna.janelle.Repl'
+    }
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

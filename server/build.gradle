@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.terna'
+
+java {
+    sourceCompatibility = '17'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'dev.terna.janelle.Server'
+    }
+}

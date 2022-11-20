@@ -1,0 +1,17 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'dev.terna'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'guru.nidi:graphviz-java-all-j2v8:0.18.1'
+}
