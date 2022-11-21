@@ -287,6 +287,68 @@ public class BPlusTree {
 	}
 
     /**
+	 * Given a key, this method returns the value associated with the key
+	 * within a key-value pair that exists inside the B+ tree.
+	 * @param key: the key to be searched within the B+ tree
+	 * @return the Page associated with the key within the B+ tree
+	 */
+	public Page search(int key) {
+		// If B+ tree is completely empty, simply return null
+		if (isEmpty()) {
+            return null;
+        }
+
+		// Find leaf node that holds the key
+		LeafNode ln = (this.root == null) ? this.firstLeaf : findLeafNode(key);
+
+		// Perform binary search to find index of key within kvps
+		int index = Utils.binarySearch(ln.kvps, ln.numPairs, key);
+
+		// If index negative, the key doesn't exist in B+ tree
+		if (index < 0) {
+			return null;
+		} else {
+			return ln.kvps[index].value;
+		}
+	}
+
+	/**
+	 * This method traverses the doubly linked list of the B+ tree and records
+	 * all values whose associated keys are within the range specified by
+	 * lowerBound and upperBound.
+	 * @param lowerBound: (int) the lower bound of the range
+	 * @param upperBound: (int) the upper bound of the range
+	 * @return an list that holds all values of key-value pairs
+	 * whose keys are within the specified range
+	 */
+	public ArrayList<Page> search(int lowerBound, int upperBound) {
+		// Instantiate Page list to hold values
+		ArrayList<Page> values = new ArrayList<>();
+
+		// Iterate through the doubly linked list of leaves
+		LeafNode currNode = this.firstLeaf;
+		while (currNode != null) {
+			// Iterate through the kvps of each node
+			for (var kvp : currNode.kvps) {
+				// Stop searching the dictionary once a null value is encountered as this the indicates the end of non-null values
+				if (kvp == null) {
+                    break;
+                }
+
+				// Include value if its key fits within the provided range
+				if (lowerBound <= kvp.key && kvp.key <= upperBound) {
+					values.add(kvp.value);
+				}
+			}
+
+			// Update the current node to be the right sibling, leaf traversal is from left to right
+			currNode = currNode.rightSibling;
+		}
+
+		return values;
+	}
+
+    /**
      * Generate image of tree and write it to file.
      */
     public void visualize() {

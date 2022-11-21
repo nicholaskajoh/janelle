@@ -1,6 +1,7 @@
 package dev.terna.janelle.bplustree;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 public class Utils {
     /**
@@ -55,5 +56,26 @@ public class Utils {
             }
             return a.compareTo(b);
 		});
+	}
+
+    /**
+	 * This method performs a standard binary search on a sorted
+	 * KeyValuePair[] and returns the index of the key-value pair
+	 * with target key t if found. Otherwise, this method returns a negative
+	 * value.
+	 * @param kvps: list of key-value pairs sorted by key within leaf node
+	 * @param t: target key value of key-value pair being searched for
+	 * @return index of the target value if found, else a negative value
+	 */
+	public static int binarySearch(KeyValuePair[] kvps, int numPairs, int t) {
+		Comparator<KeyValuePair> c = new Comparator<KeyValuePair>() {
+			@Override
+			public int compare(KeyValuePair kvp1, KeyValuePair kvp2) {
+				Integer a = Integer.valueOf(kvp1.key);
+				Integer b = Integer.valueOf(kvp2.key);
+				return a.compareTo(b);
+			}
+		};
+		return Arrays.binarySearch(kvps, 0, numPairs, new KeyValuePair(t, null), c);
 	}
 }

@@ -27,5 +27,9 @@ public class Repl {
         tree.insert(17, new Page("q"));
 
         tree.visualize();
+
+        System.out.println(tree.search(2)); // b
+        System.out.println(tree.search(7, 11)); // g, h, i, j, k
+        System.out.println(tree.search(26)); // null
     }
 }
