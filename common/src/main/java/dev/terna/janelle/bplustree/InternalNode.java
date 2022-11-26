@@ -61,19 +61,19 @@ public class InternalNode extends Node {
      * below the allowed minimum.
      * @return a boolean indicating whether the InternalNode is deficient or not
      */
-    private boolean isDeficient() {
+    public boolean isDeficient() {
         return this.degree < this.minDegree;
     }
 
     /**
      * This simple method determines if the InternalNode is capable of
-     * lending one of its dictionary pairs to a deficient node. An InternalNode
-     * can give away a dictionary pair if its current degree is above the
+     * lending one of its key-value pairs to a deficient node. An InternalNode
+     * can give away a key-value pair if its current degree is above the
      * specified minimum.
      * @return a boolean indicating whether or not the InternalNode has
-     * enough dictionary pairs in order to give one away.
+     * enough key-value pairs in order to give one away.
      */
-    private boolean isLendable() {
+    public boolean isLendable() {
         return this.degree > this.minDegree;
     }
 
@@ -84,7 +84,7 @@ public class InternalNode extends Node {
      * @return a boolean indicating whether or not the InternalNode can be
      * merged with
      */
-    private boolean isMergeable() {
+    public boolean isMergeable() {
         return this.degree == this.minDegree;
     }
 
@@ -103,7 +103,7 @@ public class InternalNode extends Node {
      * the beginning of the childPointers instance variable.
      * @param pointer: the Node object to be prepended within childPointers
      */
-    private void prependChildPointer(Node pointer) {
+    public void prependChildPointer(Node pointer) {
         for (int i = degree - 1; i >= 0 ;i--) {
             childPointers[i + 1] = childPointers[i];
         }
@@ -116,7 +116,7 @@ public class InternalNode extends Node {
      * parent of a merging, deficient LeafNode.
      * @param index: the location within keys to be set to null
      */
-    private void removeKey(int index) {
+    public void removeKey(int index) {
         this.keys[index] = null;
     }
 
@@ -136,7 +136,7 @@ public class InternalNode extends Node {
      * index where the pointer node was assigned is set to null.
      * @param pointer: the Node pointer to be removed from childPointers
      */
-    private void removePointer(Node pointer) {
+    public void removePointer(Node pointer) {
         for (int i = 0; i < childPointers.length; i++) {
             if (childPointers[i] == pointer) { this.childPointers[i] = null; }
         }

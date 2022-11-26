@@ -5,9 +5,8 @@ import dev.terna.janelle.pager.Page;
 
 public class Repl {
     public static void main(String[] args) {
-        System.out.println("Hello, Janelle!");
+        final var tree = new BPlusTree(5);
 
-        final var tree = new BPlusTree(4);
         tree.insert(1, new Page("a"));
         tree.insert(2, new Page("b"));
         tree.insert(3, new Page("c"));
@@ -25,11 +24,16 @@ public class Repl {
         tree.insert(15, new Page("o"));
         tree.insert(16, new Page("p"));
         tree.insert(17, new Page("q"));
-
         tree.visualize();
 
         System.out.println(tree.search(2)); // b
         System.out.println(tree.search(7, 11)); // g, h, i, j, k
         System.out.println(tree.search(26)); // null
+ 
+        tree.delete(4); // d
+        tree.delete(11); // k
+        tree.delete(14); // n
+        tree.delete(13); // m
+        tree.visualize();
     }
 }

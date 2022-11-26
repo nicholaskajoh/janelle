@@ -41,7 +41,7 @@ public class Utils {
     /**
 	 * This is a specialized sorting method used upon lists of key-value pairs
 	 * that may contain interspersed null values.
-	 * @param dictionary: a list of key-value pair objects
+	 * @param kvps: a list of key-value pair objects
 	 */
 	public static void sortKeyValuePairs(KeyValuePair[] kvps) {
 		Arrays.sort(kvps, (a, b) -> {
@@ -77,5 +77,20 @@ public class Utils {
 			}
 		};
 		return Arrays.binarySearch(kvps, 0, numPairs, new KeyValuePair(t, null), c);
+	}
+
+    /**
+	 * Given a list of pointers to Node objects, this method returns the index of
+	 * the pointer that points to the specified 'node' LeafNode object.
+	 * @param pointers: a list of pointers to Node objects
+	 * @param node: a specific pointer to a LeafNode
+	 * @return (int) index of pointer in list of pointers
+	 */
+	public static int findIndexOfPointer(Node[] pointers, LeafNode node) {
+		int i;
+		for (i = 0; i < pointers.length; i++) {
+			if (pointers[i] == node) { break; }
+		}
+		return i;
 	}
 }

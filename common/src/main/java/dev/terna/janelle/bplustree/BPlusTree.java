@@ -20,6 +20,7 @@ public class BPlusTree {
     private final int m;
 	private InternalNode root;
 	private LeafNode firstLeaf;
+    private int vizFileSequence = 1;
 
     public BPlusTree(int m) {
         this.m = m;
@@ -41,33 +42,33 @@ public class BPlusTree {
 
 			// Insert into leaf node fails if node becomes overfull
 			if (!ln.insert(new KeyValuePair(key, value))) {
-				// Sort all the dictionary pairs with the included pair to be inserted
+				// Sort all the key-value pairs with the included pair to be inserted
 				ln.kvps[ln.numPairs] = new KeyValuePair(key, value);
 				ln.numPairs++;
 				Utils.sortKeyValuePairs(ln.kvps);
 
 				// Split the sorted pairs into two halves
 				int midpoint = getMidpoint();
-				KeyValuePair[] halfDict = splitDictionary(ln, midpoint);
+				KeyValuePair[] halfKvps = splitKvps(ln, midpoint);
 
 				if (ln.parent == null) {
 					// Flow of execution goes here when there is 1 node in tree
 					// Create internal node to serve as parent, use kvps midpoint key
 					Integer[] parentKeys = new Integer[this.m];
-					parentKeys[0] = halfDict[0].key;
+					parentKeys[0] = halfKvps[0].key;
 					InternalNode parent = new InternalNode(this.m, parentKeys);
 					ln.parent = parent;
 					parent.appendChildPointer(ln);
 				} else {
 					// Flow of execution goes here when parent exists
 					// Add new key to parent for proper indexing
-					int newParentKey = halfDict[0].key;
+					int newParentKey = halfKvps[0].key;
 					ln.parent.keys[ln.parent.degree - 1] = newParentKey;
 					Arrays.sort(ln.parent.keys, 0, ln.parent.degree);
 				}
 
 				// Create new LeafNode that holds the other half
-				LeafNode newLeafNode = new LeafNode(this.m, halfDict, ln.parent);
+				LeafNode newLeafNode = new LeafNode(this.m, halfKvps, ln.parent);
 
 				// Update child pointers of parent node
 				int pointerIndex = ln.parent.findIndexOfPointer(ln) + 1;
@@ -167,27 +168,27 @@ public class BPlusTree {
 	}
 
     /**
-	 * This method splits a single dictionary into two dictionaries where all
-	 * dictionaries are of equal length, but each of the resulting dictionaries
-	 * holds half of the original dictionary's non-null values. This method is
-	 * primarily used when splitting a node within the B+ tree. The dictionary of
+	 * This method splits kvps into two kvps where all
+	 * kvps are of equal length, but each of the resulting kvps
+	 * holds half of the original kvps' non-null values. This method is
+	 * primarily used when splitting a node within the B+ tree. The kvps of
 	 * the specified LeafNode is modified in place. The method returns the
-	 * remainder of the KeyValuePairs that are no longer within ln's dictionary.
+	 * remainder of the KeyValuePairs that are no longer within ln's kvps.
 	 * @param ln: list of DKeyValuePairs to be split
 	 * @param split: the index at which the split occurs
-	 * @retuKeyValuePair[] of the two split dictionaries
+	 * @return KeyValuePair[] of the two split kvps
 	 */
-	private KeyValuePair[] splitDictionary(LeafNode ln, int split) {
-		// Initialize two dictionaries that each hold half of the original dictionary values
-		KeyValuePair[] halfDict = new KeyValuePair[this.m];
+	private KeyValuePair[] splitKvps(LeafNode ln, int split) {
+		// Initialize two kvps that each hold half of the original kvps values
+		KeyValuePair[] halfKvps = new KeyValuePair[this.m];
 
-		// Copy half of the values into halfDict
+		// Copy half of the values into halfKvps
 		for (int i = split; i < ln.kvps.length; i++) {
-			halfDict[i - split] = ln.kvps[i];
+			halfKvps[i - split] = ln.kvps[i];
 			ln.delete(i);
 		}
 
-		return halfDict;
+		return halfKvps;
 	}
 
     private void splitInternalNode(InternalNode in) {
@@ -330,7 +331,7 @@ public class BPlusTree {
 		while (currNode != null) {
 			// Iterate through the kvps of each node
 			for (var kvp : currNode.kvps) {
-				// Stop searching the dictionary once a null value is encountered as this the indicates the end of non-null values
+				// Stop searching kvps once a null value is encountered as this the indicates the end of non-null values
 				if (kvp == null) {
                     break;
                 }
@@ -348,6 +349,206 @@ public class BPlusTree {
 		return values;
 	}
 
+    /**
+	 * Given a key, this method will remove the key-value pair with the
+	 * corresponding key from the B+ tree.
+	 * @param key: an integer key that corresponds with an existing key-value pair
+	 */
+	public void delete(int key) {
+		if (!isEmpty()) {
+			// Get leaf node and attempt to find index of key to delete
+			LeafNode ln = (this.root == null) ? this.firstLeaf : findLeafNode(key);
+			int kvpIndex = Utils.binarySearch(ln.kvps, ln.numPairs, key);
+
+			if (kvpIndex > -1) {
+				// Successfully delete the key-value pair
+				ln.delete(kvpIndex);
+
+				// Check for deficiencies
+				if (ln.isDeficient()) {
+					LeafNode sibling;
+					InternalNode parent = ln.parent;
+
+					// Borrow: First, check the left sibling, then the right sibling
+					if (ln.leftSibling != null &&
+						ln.leftSibling.parent == ln.parent &&
+						ln.leftSibling.isLendable()) {
+
+						sibling = ln.leftSibling;
+						KeyValuePair borrowedKvp = sibling.kvps[sibling.numPairs - 1];
+
+						// Insert borrowed key-value pair, sort kvps, and delete key-value pair from sibling
+						ln.insert(borrowedKvp);
+						Utils.sortKeyValuePairs(ln.kvps);
+						sibling.delete(sibling.numPairs - 1);
+
+						// Update key in parent if necessary
+						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
+						if (!(borrowedKvp.key >= parent.keys[pointerIndex - 1])) {
+							parent.keys[pointerIndex - 1] = ln.kvps[0].key;
+						}
+					} else if (ln.rightSibling != null &&
+							   ln.rightSibling.parent == ln.parent &&
+							   ln.rightSibling.isLendable()) {
+						sibling = ln.rightSibling;
+						KeyValuePair borrowedKvp = sibling.kvps[0];
+
+						// Insert borrowed key-value pair, sort kvps, and delete key-value pair from sibling
+						ln.insert(borrowedKvp);
+						sibling.delete(0);
+						Utils.sortKeyValuePairs(sibling.kvps);
+
+						// Update key in parent if necessary
+						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
+						if (!(borrowedKvp.key < parent.keys[pointerIndex])) {
+							parent.keys[pointerIndex] = sibling.kvps[0].key;
+						}
+
+                    // Merge: First, check the left sibling, then the right sibling
+					} else if (ln.leftSibling != null &&
+							 ln.leftSibling.parent == ln.parent &&
+							 ln.leftSibling.isMergeable()) {
+						sibling = ln.leftSibling;
+						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
+
+						// Remove key and child pointer from parent
+						parent.removeKey(pointerIndex - 1);
+						parent.removePointer(ln);
+
+						// Update sibling pointer
+						sibling.rightSibling = ln.rightSibling;
+
+						// Check for deficiencies in parent
+						if (parent.isDeficient()) {
+							handleDeficiency(parent);
+						}
+					} else if (ln.rightSibling != null &&
+							   ln.rightSibling.parent == ln.parent &&
+							   ln.rightSibling.isMergeable()) {
+
+						sibling = ln.rightSibling;
+						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
+
+						// Remove key and child pointer from parent
+						parent.removeKey(pointerIndex);
+						parent.removePointer(pointerIndex);
+
+						// Update sibling pointer
+						sibling.leftSibling = ln.leftSibling;
+						if (sibling.leftSibling == null) {
+							firstLeaf = sibling;
+						}
+
+						if (parent.isDeficient()) {
+							handleDeficiency(parent);
+						}
+					}
+				} else if (this.root == null && this.firstLeaf.numPairs == 0) {
+					// Flow of execution goes here when the deleted key-value pair was the only pair within the tree
+					// Set first leaf as null to indicate B+ tree is empty
+					this.firstLeaf = null;
+				} else {
+					// The kvps of the LeafNode object may need to be sorted after a successful delete
+					Utils.sortKeyValuePairs(ln.kvps);
+				}
+			}
+		}
+	}
+
+    /**
+	 * Given a deficient InternalNode in, this method remedies the deficiency
+	 * through borrowing and merging.
+	 * @param in: a deficient InternalNode
+	 */
+	private void handleDeficiency(InternalNode in) {
+		InternalNode sibling;
+		InternalNode parent = in.parent;
+
+		// Remedy deficient root node
+		if (this.root == in) {
+			for (int i = 0; i < in.childPointers.length; i++) {
+				if (in.childPointers[i] != null) {
+					if (in.childPointers[i] instanceof InternalNode) {
+						this.root = (InternalNode)in.childPointers[i];
+						this.root.parent = null;
+					} else if (in.childPointers[i] instanceof LeafNode) {
+						this.root = null;
+					}
+				}
+			}
+
+        // Borrow:
+		} else if (in.leftSibling != null && in.leftSibling.isLendable()) {
+			sibling = in.leftSibling;
+		} else if (in.rightSibling != null && in.rightSibling.isLendable()) {
+			sibling = in.rightSibling;
+
+			// Copy 1 key and pointer from sibling (atm just 1 key)
+			int borrowedKey = sibling.keys[0];
+			Node pointer = sibling.childPointers[0];
+
+			// Copy root key and pointer into parent
+			in.keys[in.degree - 1] = parent.keys[0];
+			in.childPointers[in.degree] = pointer;
+
+			// Copy borrowedKey into root
+			parent.keys[0] = borrowedKey;
+
+			// Delete key and pointer from sibling
+			sibling.removePointer(0);
+			Arrays.sort(sibling.keys);
+			sibling.removePointer(0);
+			shiftDown(in.childPointers, 1);
+		}
+
+		// Merge:
+		else if (in.leftSibling != null && in.leftSibling.isMergeable()) {
+            // Do nothing
+		} else if (in.rightSibling != null && in.rightSibling.isMergeable()) {
+			sibling = in.rightSibling;
+
+			// Copy rightmost key in parent to beginning of sibling's keys &
+			// delete key from parent
+			sibling.keys[sibling.degree - 1] = parent.keys[parent.degree - 2];
+			Arrays.sort(sibling.keys, 0, sibling.degree);
+			parent.keys[parent.degree - 2] = null;
+
+			// Copy in's child pointer over to sibling's list of child pointers
+			for (int i = 0; i < in.childPointers.length; i++) {
+				if (in.childPointers[i] != null) {
+					sibling.prependChildPointer(in.childPointers[i]);
+					in.childPointers[i].parent = sibling;
+					in.removePointer(i);
+				}
+			}
+
+			// Delete child pointer from grandparent to deficient node
+			parent.removePointer(in);
+
+			// Remove left sibling
+			sibling.leftSibling = in.leftSibling;
+		}
+
+		// Handle deficiency a level up if it exists
+		if (parent != null && parent.isDeficient()) {
+			handleDeficiency(parent);
+		}
+	}
+
+    /**
+	 * This method is used to shift down a set of pointers that are prepended
+	 * by null values.
+	 * @param pointers: the list of pointers that are to be shifted
+	 * @param amount: the amount by which the pointers are to be shifted
+	 */
+	private void shiftDown(Node[] pointers, int amount) {
+		Node[] newPointers = new Node[this.m + 1];
+		for (int i = amount; i < pointers.length; i++) {
+			newPointers[i - amount] = pointers[i];
+		}
+		pointers = newPointers;
+	}
+    
     /**
      * Generate image of tree and write it to file.
      */
@@ -399,7 +600,13 @@ public class BPlusTree {
 
         Graph graph = Factory.graph("bplustree").directed().with(gvNodes.values().stream().collect(Collectors.toList()));
         try {
-            Graphviz.fromGraph(graph).width(3500).height(1000).render(Format.PNG).toFile(new File("viz/bplustree.png"));
+            final var file = new File("viz/bplustree_" + vizFileSequence + ".png");
+            Graphviz.fromGraph(graph)
+                .width(3500)
+                .height(1000)
+                .render(Format.PNG).
+                toFile(file);
+            vizFileSequence++;
         } catch (IOException e) {
             e.printStackTrace();
         }

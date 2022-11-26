@@ -62,11 +62,11 @@ public class LeafNode extends Node {
 
     /**
      * This simple method determines if the LeafNode object is capable of
-     * lending a dictionary pair to a deficient leaf node. The LeafNode
-     * object can lend a dictionary pair if its numPairs is greater than
+     * lending a key-value pair to a deficient leaf node. The LeafNode
+     * object can lend a key-value pair if its numPairs is greater than
      * the minimum number of pairs it can hold.
      * @return a boolean indicating whether or not the LeafNode object can
-     * give a dictionary pair to a deficient leaf node
+     * give a key-value pair to a deficient leaf node
      */
     public boolean isLendable() {
         return numPairs > minNumPairs;
