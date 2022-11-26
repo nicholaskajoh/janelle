@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import dev.terna.janelle.pager.Page;
+import dev.terna.janelle.database.Row;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.engine.Format;
@@ -29,7 +29,7 @@ public class BPlusTree {
     /**
      * Algorithm: https://www.youtube.com/watch?v=DqcZLulVJ0M
      */
-    public void insert(int key, Page value) {
+    public void insert(int key, Row value) {
         if (isEmpty()) {
 			// Flow of execution goes here only when first insert takes place
 			// Create leaf node as first node in B plus tree (root is null)
@@ -291,9 +291,9 @@ public class BPlusTree {
 	 * Given a key, this method returns the value associated with the key
 	 * within a key-value pair that exists inside the B+ tree.
 	 * @param key: the key to be searched within the B+ tree
-	 * @return the Page associated with the key within the B+ tree
+	 * @return the Row associated with the key within the B+ tree
 	 */
-	public Page search(int key) {
+	public Row search(int key) {
 		// If B+ tree is completely empty, simply return null
 		if (isEmpty()) {
             return null;
@@ -322,9 +322,9 @@ public class BPlusTree {
 	 * @return an list that holds all values of key-value pairs
 	 * whose keys are within the specified range
 	 */
-	public ArrayList<Page> search(int lowerBound, int upperBound) {
-		// Instantiate Page list to hold values
-		ArrayList<Page> values = new ArrayList<>();
+	public ArrayList<Row> search(int lowerBound, int upperBound) {
+		// Instantiate Row list to hold values
+		ArrayList<Row> values = new ArrayList<>();
 
 		// Iterate through the doubly linked list of leaves
 		LeafNode currNode = this.firstLeaf;

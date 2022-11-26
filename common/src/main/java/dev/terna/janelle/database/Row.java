@@ -1,9 +1,9 @@
-package dev.terna.janelle.pager;
+package dev.terna.janelle.database;
 
-public class Page {
+public class Row {
     String data;
 
-    public Page(String data) {
+    public Row(String data) {
         this.data = data;
     }
 

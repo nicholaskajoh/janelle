@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch BPlusTreeTest",
+            "request": "launch",
+            "mainClass": "dev.terna.janelle.bplustree.BPlusTreeTest",
+            "projectName": "common"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}"
@@ -16,13 +23,6 @@
             "request": "launch",
             "mainClass": "dev.terna.janelle.Repl",
             "projectName": "repl"
-        },
-        {
-            "type": "java",
-            "name": "Launch Server",
-            "request": "launch",
-            "mainClass": "dev.terna.janelle.Server",
-            "projectName": "server"
         }
     ]
 }

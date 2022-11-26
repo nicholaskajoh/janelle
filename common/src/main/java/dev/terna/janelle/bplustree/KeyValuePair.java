@@ -1,12 +1,12 @@
 package dev.terna.janelle.bplustree;
 
-import dev.terna.janelle.pager.Page;
+import dev.terna.janelle.database.Row;
 
 public class KeyValuePair implements Comparable<KeyValuePair> {
     int key;
-    Page value;
+    Row value;
 
-    public KeyValuePair(int key, Page value) {
+    public KeyValuePair(int key, Row value) {
         this.key = key;
         this.value = value;
     }
