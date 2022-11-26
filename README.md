@@ -2,17 +2,15 @@
 Janelle (pronounced *ya-nel*) is a simple SQL database written in Java. The goal of this project is to learn how databases work by building one.
 
 ## Features
-- Connect to DB via TCP server or REPL.
+- Interact with DB via REPL.
 - Run basic SQL queries (see section below).
-- Index tables for faster queries.
+- Index columns for faster queries.
 - Start and commit/roll back transactions.
 
 ## Setup
 - Clone repo.
-- Build REPL `./gradlew buildRepl`.
-- Or build server `./gradlew buildServer`.
-- Run REPL `java -jar repl/build/libs/repl.jar`.
-- Or run server `java -jar server/build/libs/server.jar`.
+- Build `./gradlew buildRepl`.
+- Run `java -jar repl/build/libs/repl.jar`.
 
 ## Queries
 - CRUD table
