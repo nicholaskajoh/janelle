@@ -1,5 +1,5 @@
 # Janelle [WIP]
-Janelle (pronounced *ya-nel*) is a simple SQL database written in Java. The goal of this project is to learn how databases work by building one.
+Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of this project is to learn how databases work by building one.
 
 ## Features
 - Interact with DB via REPL.
