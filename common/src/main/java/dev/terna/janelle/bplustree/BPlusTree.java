@@ -566,10 +566,15 @@ public class BPlusTree implements Serializable {
             }
         }
 
+        if (root == null && firstLeaf == null) {
+            System.out.println("B+ tree empty. Nothing to visualize. :(");
+        }
+
         final Stack<NodeAndFriends> stack = new Stack<>();
         final HashMap<String, guru.nidi.graphviz.model.MutableNode> gvNodes = new HashMap<>();
 
-        stack.push(new NodeAndFriends(root, null, null));
+        final Node startNode = root != null ? root : firstLeaf;
+        stack.push(new NodeAndFriends(startNode, null, null));
         while (!stack.empty()) {
             final var nodeaf = stack.pop();
             final var gvNodeLabel = nodeaf.node.toString();

@@ -7,6 +7,7 @@ public class DatabaseTest {
         try {
             final var configsTable = db.getTable(Database.DB_CONFIGS_TABLE_NAME);
             Utils.printTable(configsTable);
+            configsTable.getData().visualize();
         } catch (Exception e) {
             e.printStackTrace();
         }

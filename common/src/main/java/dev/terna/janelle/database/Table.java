@@ -71,6 +71,10 @@ public class Table implements Serializable {
         return schema;
     }
 
+    public BPlusTree getData() {
+        return data;
+    }
+
     /**
      * Extract fields in row.
      */
