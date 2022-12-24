@@ -31,6 +31,11 @@ public class BPlusTreeTest {
         tree.delete(11); // k
         tree.delete(14); // n
         tree.delete(13); // m
+        
+        tree.insert(5, "ee");
+        tree.insert(5, "eee");
+        System.out.println(tree.search(5, 5)); // e, ee, eee
+
         tree.visualize();
     }
 }

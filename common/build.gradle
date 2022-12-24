@@ -14,4 +14,5 @@ repositories {
 
 dependencies {
     api 'guru.nidi:graphviz-java-all-j2v8:0.18.1'
+    api 'com.massisframework:j-text-utils:0.3.4'
 }

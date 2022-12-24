@@ -2,6 +2,7 @@ package dev.terna.janelle.bplustree;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,8 @@ import guru.nidi.graphviz.model.Graph;
 /**
  * Sauce: https://github.com/shandysulen/B-Plus-Tree.
  */
-public class BPlusTree {
+public class BPlusTree implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final int m;
 	private InternalNode root;
 	private LeafNode firstLeaf;

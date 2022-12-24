@@ -1,6 +1,9 @@
 package dev.terna.janelle.bplustree;
 
-public class KeyValuePair implements Comparable<KeyValuePair> {
+import java.io.Serializable;
+
+public class KeyValuePair implements Comparable<KeyValuePair>, Serializable {
+    private static final long serialVersionUID = 1L;
     int key;
     Object value;
 

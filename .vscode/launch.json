@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch DatabaseTest",
+            "request": "launch",
+            "mainClass": "dev.terna.janelle.database.DatabaseTest",
+            "projectName": "common"
+        },
+        {
+            "type": "java",
             "name": "Launch BPlusTreeTest",
             "request": "launch",
             "mainClass": "dev.terna.janelle.bplustree.BPlusTreeTest",
