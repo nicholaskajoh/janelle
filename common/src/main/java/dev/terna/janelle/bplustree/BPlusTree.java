@@ -30,11 +30,11 @@ public class BPlusTree implements Serializable {
     /**
      * Algorithm: https://www.youtube.com/watch?v=DqcZLulVJ0M
      */
-    public void insert(int key, Object value) {
+    public void insert(long key, long value) {
         if (isEmpty()) {
 			// Flow of execution goes here only when first insert takes place
 			// Create leaf node as first node in B plus tree (root is null)
-			LeafNode ln = new LeafNode(this.m, new KeyValuePair(key, value));
+			LeafNode ln = new LeafNode(this.m, new Entry(key, value));
 			// Set as first leaf node (can be used later for in-order leaf traversal)
 			this.firstLeaf = ln;
 		} else {
@@ -42,34 +42,34 @@ public class BPlusTree implements Serializable {
 			LeafNode ln = (this.root == null) ? this.firstLeaf : findLeafNode(key);
 
 			// Insert into leaf node fails if node becomes overfull
-			if (!ln.insert(new KeyValuePair(key, value))) {
-				// Sort all the key-value pairs with the included pair to be inserted
-				ln.kvps[ln.numPairs] = new KeyValuePair(key, value);
+			if (!ln.insert(new Entry(key, value))) {
+				// Sort all the entries with the included pair to be inserted
+				ln.entries[ln.numPairs] = new Entry(key, value);
 				ln.numPairs++;
-				Utils.sortKeyValuePairs(ln.kvps);
+				Utils.sortEntries(ln.entries);
 
 				// Split the sorted pairs into two halves
 				int midpoint = getMidpoint();
-				KeyValuePair[] halfKvps = splitKvps(ln, midpoint);
+				Entry[] halfEntries = splitEntries(ln, midpoint);
 
 				if (ln.parent == null) {
 					// Flow of execution goes here when there is 1 node in tree
-					// Create internal node to serve as parent, use kvps midpoint key
-					Integer[] parentKeys = new Integer[this.m];
-					parentKeys[0] = halfKvps[0].key;
+					// Create internal node to serve as parent, use entries midpoint key
+					Long[] parentKeys = new Long[this.m];
+					parentKeys[0] = halfEntries[0].key;
 					InternalNode parent = new InternalNode(this.m, parentKeys);
 					ln.parent = parent;
 					parent.appendChildPointer(ln);
 				} else {
 					// Flow of execution goes here when parent exists
 					// Add new key to parent for proper indexing
-					int newParentKey = halfKvps[0].key;
+					long newParentKey = halfEntries[0].key;
 					ln.parent.keys[ln.parent.degree - 1] = newParentKey;
 					Arrays.sort(ln.parent.keys, 0, ln.parent.degree);
 				}
 
 				// Create new LeafNode that holds the other half
-				LeafNode newLeafNode = new LeafNode(this.m, halfKvps, ln.parent);
+				LeafNode newLeafNode = new LeafNode(this.m, halfEntries, ln.parent);
 
 				// Update child pointers of parent node
 				int pointerIndex = ln.parent.findIndexOfPointer(ln) + 1;
@@ -112,13 +112,13 @@ public class BPlusTree implements Serializable {
 
     /**
 	 * This method starts at the root of the B+ tree and traverses down the
-	 * tree via key comparisons to the corresponding leaf node that holds 'key' within its kvps.
-	 * @param key: the unique key that lies within the kvps of a LeafNode object
-	 * @return the LeafNode object that contains the key within its kvps
+	 * tree via key comparisons to the corresponding leaf node that holds 'key' within its entries.
+	 * @param key: the unique key that lies within the entries of a LeafNode object
+	 * @return the LeafNode object that contains the key within its entries
 	 */
-	private LeafNode findLeafNode(int key) {
+	private LeafNode findLeafNode(long key) {
 		// Initialize keys and index variable
-		Integer[] keys = root.keys;
+		Long[] keys = root.keys;
 		int i;
 
 		// Find next node on path to appropriate leaf node
@@ -137,9 +137,9 @@ public class BPlusTree implements Serializable {
 		}
 	}
 
-    private LeafNode findLeafNode(InternalNode node, int key) {
+    private LeafNode findLeafNode(InternalNode node, long key) {
 		// Initialize keys and index variable
-		Integer[] keys = node.keys;
+		Long[] keys = node.keys;
 		int i;
 
 		// Find next node on path to appropriate leaf node
@@ -169,27 +169,27 @@ public class BPlusTree implements Serializable {
 	}
 
     /**
-	 * This method splits kvps into two kvps where all
-	 * kvps are of equal length, but each of the resulting kvps
-	 * holds half of the original kvps' non-null values. This method is
-	 * primarily used when splitting a node within the B+ tree. The kvps of
+	 * This method splits entries into two entries where all
+	 * entries are of equal length, but each of the resulting entries
+	 * holds half of the original entries' non-null values. This method is
+	 * primarily used when splitting a node within the B+ tree. The entries of
 	 * the specified LeafNode is modified in place. The method returns the
-	 * remainder of the KeyValuePairs that are no longer within ln's kvps.
-	 * @param ln: list of DKeyValuePairs to be split
+	 * remainder of the entries that are no longer within ln's entries.
+	 * @param ln: list of entries to be split
 	 * @param split: the index at which the split occurs
-	 * @return KeyValuePair[] of the two split kvps
+	 * @return Entry[] of the two split entries
 	 */
-	private KeyValuePair[] splitKvps(LeafNode ln, int split) {
-		// Initialize two kvps that each hold half of the original kvps values
-		KeyValuePair[] halfKvps = new KeyValuePair[this.m];
+	private Entry[] splitEntries(LeafNode ln, int split) {
+		// Initialize two entries that each hold half of the original entries values
+		Entry[] halfEntries = new Entry[this.m];
 
-		// Copy half of the values into halfKvps
-		for (int i = split; i < ln.kvps.length; i++) {
-			halfKvps[i - split] = ln.kvps[i];
+		// Copy half of the values into halfEntries
+		for (int i = split; i < ln.entries.length; i++) {
+			halfEntries[i - split] = ln.entries[i];
 			ln.delete(i);
 		}
 
-		return halfKvps;
+		return halfEntries;
 	}
 
     private void splitInternalNode(InternalNode in) {
@@ -198,8 +198,8 @@ public class BPlusTree implements Serializable {
 
 		// Split keys and pointers in half
 		int midpoint = getMidpoint();
-		int newParentKey = in.keys[midpoint];
-		Integer[] halfKeys = splitKeys(in.keys, midpoint);
+		long newParentKey = in.keys[midpoint];
+		Long[] halfKeys = splitKeys(in.keys, midpoint);
 		Node[] halfPointers = splitChildPointers(in, midpoint);
 
 		// Change degree of original InternalNode in
@@ -221,7 +221,7 @@ public class BPlusTree implements Serializable {
 
 		if (parent == null) {
 			// Create new root node and add midpoint key and pointers
-			Integer[] keys = new Integer[this.m];
+			Long[] keys = new Long[this.m];
 			keys[0] = newParentKey;
 			InternalNode newRoot = new InternalNode(this.m, keys);
 			newRoot.appendChildPointer(in);
@@ -244,15 +244,15 @@ public class BPlusTree implements Serializable {
 	}
 
     /**
-	 * This method modifies a list of Integer-typed objects that represent keys
-	 * by removing half of the keys and returning them in a separate Integer[].
+	 * This method modifies a list of Long-typed objects that represent keys
+	 * by removing half of the keys and returning them in a separate Long[].
 	 * This method is used when splitting an InternalNode object.
-	 * @param keys: a list of Integer objects
+	 * @param keys: a list of Long objects
 	 * @param split: the index where the split is to occur
-	 * @return Integer[] of removed keys
+	 * @return Long[] of removed keys
 	 */
-	private Integer[] splitKeys(Integer[] keys, int split) {
-		Integer[] halfKeys = new Integer[this.m];
+	private Long[] splitKeys(Long[] keys, int split) {
+		Long[] halfKeys = new Long[this.m];
 
 		// Remove split-indexed value from keys
 		keys[split] = null;
@@ -290,11 +290,11 @@ public class BPlusTree implements Serializable {
 
     /**
 	 * Given a key, this method returns the value associated with the key
-	 * within a key-value pair that exists inside the B+ tree.
+	 * within an entry that exists inside the B+ tree.
 	 * @param key: the key to be searched within the B+ tree
-	 * @return the Object associated with the key within the B+ tree
+	 * @return the value associated with the key within the B+ tree
 	 */
-	public Object search(int key) {
+	public Long search(int key) {
 		// If B+ tree is completely empty, simply return null
 		if (isEmpty()) {
             return null;
@@ -303,14 +303,14 @@ public class BPlusTree implements Serializable {
 		// Find leaf node that holds the key
 		LeafNode ln = (this.root == null) ? this.firstLeaf : findLeafNode(key);
 
-		// Perform binary search to find index of key within kvps
-		int index = Utils.binarySearch(ln.kvps, ln.numPairs, key);
+		// Perform binary search to find index of key within entries
+		int index = Utils.binarySearch(ln.entries, ln.numPairs, key);
 
 		// If index negative, the key doesn't exist in B+ tree
 		if (index < 0) {
 			return null;
 		} else {
-			return ln.kvps[index].value;
+			return ln.entries[index].value;
 		}
 	}
 
@@ -318,28 +318,28 @@ public class BPlusTree implements Serializable {
 	 * This method traverses the doubly linked list of the B+ tree and records
 	 * all values whose associated keys are within the range specified by
 	 * lowerBound and upperBound.
-	 * @param lowerBound: (int) the lower bound of the range
-	 * @param upperBound: (int) the upper bound of the range
-	 * @return an list that holds all values of key-value pairs
+	 * @param lowerBound: (long) the lower bound of the range
+	 * @param upperBound: (long) the upper bound of the range
+	 * @return an list that holds all values of entries
 	 * whose keys are within the specified range
 	 */
-	public ArrayList<Object> search(int lowerBound, int upperBound) {
-		// Instantiate Object list to hold values
-		ArrayList<Object> values = new ArrayList<>();
+	public ArrayList<Long> search(long lowerBound, long upperBound) {
+		// Instantiate list to hold values
+		ArrayList<Long> values = new ArrayList<>();
 
 		// Iterate through the doubly linked list of leaves
 		LeafNode currNode = this.firstLeaf;
 		while (currNode != null) {
-			// Iterate through the kvps of each node
-			for (var kvp : currNode.kvps) {
-				// Stop searching kvps once a null value is encountered as this the indicates the end of non-null values
-				if (kvp == null) {
+			// Iterate through the entries of each node
+			for (var entry : currNode.entries) {
+				// Stop searching entries once a null value is encountered as this the indicates the end of non-null values
+				if (entry == null) {
                     break;
                 }
 
 				// Include value if its key fits within the provided range
-				if (lowerBound <= kvp.key && kvp.key <= upperBound) {
-					values.add(kvp.value);
+				if (lowerBound <= entry.key && entry.key <= upperBound) {
+					values.add(entry.value);
 				}
 			}
 
@@ -351,19 +351,19 @@ public class BPlusTree implements Serializable {
 	}
 
     /**
-	 * Given a key, this method will remove the key-value pair with the
+	 * Given a key, this method will remove the entry with the
 	 * corresponding key from the B+ tree.
-	 * @param key: an integer key that corresponds with an existing key-value pair
+	 * @param key: an integer key that corresponds with an existing entry
 	 */
-	public void delete(int key) {
+	public void delete(long key) {
 		if (!isEmpty()) {
 			// Get leaf node and attempt to find index of key to delete
 			LeafNode ln = (this.root == null) ? this.firstLeaf : findLeafNode(key);
-			int kvpIndex = Utils.binarySearch(ln.kvps, ln.numPairs, key);
+			int entryIndex = Utils.binarySearch(ln.entries, ln.numPairs, key);
 
-			if (kvpIndex > -1) {
-				// Successfully delete the key-value pair
-				ln.delete(kvpIndex);
+			if (entryIndex > -1) {
+				// Successfully delete the entry
+				ln.delete(entryIndex);
 
 				// Check for deficiencies
 				if (ln.isDeficient()) {
@@ -376,33 +376,33 @@ public class BPlusTree implements Serializable {
 						ln.leftSibling.isLendable()) {
 
 						sibling = ln.leftSibling;
-						KeyValuePair borrowedKvp = sibling.kvps[sibling.numPairs - 1];
+						Entry borrowedEntry = sibling.entries[sibling.numPairs - 1];
 
-						// Insert borrowed key-value pair, sort kvps, and delete key-value pair from sibling
-						ln.insert(borrowedKvp);
-						Utils.sortKeyValuePairs(ln.kvps);
+						// Insert borrowed entry, sort entries, and delete entry from sibling
+						ln.insert(borrowedEntry);
+						Utils.sortEntries(ln.entries);
 						sibling.delete(sibling.numPairs - 1);
 
 						// Update key in parent if necessary
 						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
-						if (!(borrowedKvp.key >= parent.keys[pointerIndex - 1])) {
-							parent.keys[pointerIndex - 1] = ln.kvps[0].key;
+						if (!(borrowedEntry.key >= parent.keys[pointerIndex - 1])) {
+							parent.keys[pointerIndex - 1] = ln.entries[0].key;
 						}
 					} else if (ln.rightSibling != null &&
 							   ln.rightSibling.parent == ln.parent &&
 							   ln.rightSibling.isLendable()) {
 						sibling = ln.rightSibling;
-						KeyValuePair borrowedKvp = sibling.kvps[0];
+						Entry borrowedEntry = sibling.entries[0];
 
-						// Insert borrowed key-value pair, sort kvps, and delete key-value pair from sibling
-						ln.insert(borrowedKvp);
+						// Insert borrowed entry, sort entries, and delete entry from sibling
+						ln.insert(borrowedEntry);
 						sibling.delete(0);
-						Utils.sortKeyValuePairs(sibling.kvps);
+						Utils.sortEntries(sibling.entries);
 
 						// Update key in parent if necessary
 						int pointerIndex = Utils.findIndexOfPointer(parent.childPointers, ln);
-						if (!(borrowedKvp.key < parent.keys[pointerIndex])) {
-							parent.keys[pointerIndex] = sibling.kvps[0].key;
+						if (!(borrowedEntry.key < parent.keys[pointerIndex])) {
+							parent.keys[pointerIndex] = sibling.entries[0].key;
 						}
 
                     // Merge: First, check the left sibling, then the right sibling
@@ -445,12 +445,12 @@ public class BPlusTree implements Serializable {
 						}
 					}
 				} else if (this.root == null && this.firstLeaf.numPairs == 0) {
-					// Flow of execution goes here when the deleted key-value pair was the only pair within the tree
+					// Flow of execution goes here when the deleted entry was the only pair within the tree
 					// Set first leaf as null to indicate B+ tree is empty
 					this.firstLeaf = null;
 				} else {
-					// The kvps of the LeafNode object may need to be sorted after a successful delete
-					Utils.sortKeyValuePairs(ln.kvps);
+					// The entries of the LeafNode object may need to be sorted after a successful delete
+					Utils.sortEntries(ln.entries);
 				}
 			}
 		}
@@ -485,7 +485,7 @@ public class BPlusTree implements Serializable {
 			sibling = in.rightSibling;
 
 			// Copy 1 key and pointer from sibling (atm just 1 key)
-			int borrowedKey = sibling.keys[0];
+			long borrowedKey = sibling.keys[0];
 			Node pointer = sibling.childPointers[0];
 
 			// Copy root key and pointer into parent

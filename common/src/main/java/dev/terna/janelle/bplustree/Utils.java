@@ -23,15 +23,15 @@ public class Utils {
 
     /**
 	 * This method performs a standard linear search on a sorted
-	 * KeyValuePair[] and returns the index of the first null entry found.
+	 * Entry[] and returns the index of the first null entry found.
 	 * Otherwise, this method returns a -1. This method is primarily used in
 	 * place of binarySearch() when the target t = null.
-	 * @param kvps: list of key-value pairs sorted by key within leaf node
+	 * @param entries: list of entries sorted by key within leaf node
 	 * @return index of the target value if found, else -1
 	 */
-    public static int linearNullSearch(KeyValuePair[] kvps) {
-		for (int i = 0; i <  kvps.length; i++) {
-			if (kvps[i] == null) {
+    public static int linearNullSearch(Entry[] entries) {
+		for (int i = 0; i <  entries.length; i++) {
+			if (entries[i] == null) {
                 return i;
             }
 		}
@@ -39,12 +39,12 @@ public class Utils {
 	}
 
     /**
-	 * This is a specialized sorting method used upon lists of key-value pairs
+	 * This is a specialized sorting method used upon lists of entries
 	 * that may contain interspersed null values.
-	 * @param kvps: a list of key-value pair objects
+	 * @param entries: a list of Entry objects
 	 */
-	public static void sortKeyValuePairs(KeyValuePair[] kvps) {
-		Arrays.sort(kvps, (a, b) -> {
+	public static void sortEntries(Entry[] entries) {
+		Arrays.sort(entries, (a, b) -> {
             if (a == null && b == null) {
                 return 0;
             }
@@ -60,23 +60,23 @@ public class Utils {
 
     /**
 	 * This method performs a standard binary search on a sorted
-	 * KeyValuePair[] and returns the index of the key-value pair
+	 * Entry[] and returns the index of the entry
 	 * with target key t if found. Otherwise, this method returns a negative
 	 * value.
-	 * @param kvps: list of key-value pairs sorted by key within leaf node
-	 * @param t: target key value of key-value pair being searched for
+	 * @param entries: list of entries sorted by key within leaf node
+	 * @param t: target key value of entry being searched for
 	 * @return index of the target value if found, else a negative value
 	 */
-	public static int binarySearch(KeyValuePair[] kvps, int numPairs, int t) {
-		Comparator<KeyValuePair> c = new Comparator<KeyValuePair>() {
+	public static int binarySearch(Entry[] entries, int numPairs, long t) {
+		Comparator<Entry> c = new Comparator<Entry>() {
 			@Override
-			public int compare(KeyValuePair kvp1, KeyValuePair kvp2) {
-				Integer a = Integer.valueOf(kvp1.key);
-				Integer b = Integer.valueOf(kvp2.key);
+			public int compare(Entry entry1, Entry entry2) {
+				Long a = Long.valueOf(entry1.key);
+				Long b = Long.valueOf(entry2.key);
 				return a.compareTo(b);
 			}
 		};
-		return Arrays.binarySearch(kvps, 0, numPairs, new KeyValuePair(t, null), c);
+		return Arrays.binarySearch(entries, 0, numPairs, new Entry(t, 0L), c);
 	}
 
     /**

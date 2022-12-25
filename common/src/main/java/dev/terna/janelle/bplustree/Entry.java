@@ -2,21 +2,21 @@ package dev.terna.janelle.bplustree;
 
 import java.io.Serializable;
 
-public class KeyValuePair implements Comparable<KeyValuePair>, Serializable {
+public class Entry implements Comparable<Entry>, Serializable {
     private static final long serialVersionUID = 1L;
-    int key;
-    Object value;
+    long key;
+    long value;
 
-    public KeyValuePair(int key, Object value) {
+    public Entry(long key, long value) {
         this.key = key;
         this.value = value;
     }
 
     @Override
-    public int compareTo(KeyValuePair otherKvp) {
-        if (key == otherKvp.key) {
+    public int compareTo(Entry otherEntry) {
+        if (key == otherEntry.key) {
             return 0;
-        } else if (key > otherKvp.key) {
+        } else if (key > otherEntry.key) {
             return 1;
         } else {
             return -1;

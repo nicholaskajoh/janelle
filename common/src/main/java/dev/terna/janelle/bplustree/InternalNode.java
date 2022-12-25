@@ -8,7 +8,7 @@ public class InternalNode extends Node {
     int degree;
     InternalNode leftSibling;
     InternalNode rightSibling;
-    Integer[] keys;
+    Long[] keys;
     Node[] childPointers;
 
     /**
@@ -67,11 +67,11 @@ public class InternalNode extends Node {
 
     /**
      * This simple method determines if the InternalNode is capable of
-     * lending one of its key-value pairs to a deficient node. An InternalNode
-     * can give away a key-value pair if its current degree is above the
+     * lending one of its entries to a deficient node. An InternalNode
+     * can give away an entry if its current degree is above the
      * specified minimum.
      * @return a boolean indicating whether or not the InternalNode has
-     * enough key-value pairs in order to give one away.
+     * enough entries in order to give one away.
      */
     public boolean isLendable() {
         return this.degree > this.minDegree;
@@ -148,7 +148,7 @@ public class InternalNode extends Node {
      * @param m: the max degree of the InternalNode
      * @param keys: the list of keys that InternalNode is initialized with
      */
-    public InternalNode(int m, Integer[] keys) {
+    public InternalNode(int m, Long[] keys) {
         super();
         this.maxDegree = m;
         this.minDegree = (int)Math.ceil(m / 2.0);
@@ -163,7 +163,7 @@ public class InternalNode extends Node {
      * @param keys: the list of keys that InternalNode is initialized with
      * @param pointers: the list of pointers that InternalNode is initialized with
      */
-    public InternalNode(int m, Integer[] keys, Node[] pointers) {
+    public InternalNode(int m, Long[] keys, Node[] pointers) {
         super();
         this.maxDegree = m;
         this.minDegree = (int)Math.ceil(m / 2.0);

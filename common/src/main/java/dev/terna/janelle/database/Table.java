@@ -97,10 +97,10 @@ public class Table implements Serializable {
     /**
      * Select range of rows.
      */
-    public List<byte[][]> select(int fromRow, int toRow) {
+    public List<byte[][]> select(long fromRow, long toRow) {
         List<byte[][]> rows = new ArrayList<>();
 
-        List<Object> rowPointers = data.search(fromRow, toRow);
+        List<Long> rowPointers = data.search(fromRow, toRow);
         for (var rowPointer : rowPointers) {
             final var seekPosition = (long) rowPointer;
             final var bytes = fileHandler.readData(seekPosition, rowSizeInBytes);

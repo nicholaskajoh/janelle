@@ -8,36 +8,36 @@ public class LeafNode extends Node {
     int numPairs;
     LeafNode leftSibling;
     LeafNode rightSibling;
-    KeyValuePair[] kvps;
+    Entry[] entries;
 
     /**
-     * Given an index, this method sets the key-value pair at that index within kvps to null.
-     * @param index: the location within kvp to be set to null
+     * Given an index, this method sets the entry at that index within entries to null.
+     * @param index: the location within entry to be set to null
      */
     public void delete(int index) {
-        // Delete key-value pair from leaf
-        this.kvps[index] = null;
+        // Delete entry from leaf
+        this.entries[index] = null;
         // Decrement numPairs
         numPairs--;
     }
 
     /**
-     * This method attempts to insert a key-value pair within kvps
+     * This method attempts to insert an entry within entries
      * of the LeafNode object. If it succeeds, numPairs increments,
-     * kvps is sorted, and the boolean true is returned. If the method
+     * entries is sorted, and the boolean true is returned. If the method
      * fails, the boolean false is returned.
-     * @param kvp: the key-value pair to be inserted
+     * @param entry: the entry to be inserted
      * @return a boolean indicating whether or not the insert was successful
      */
-    public boolean insert(KeyValuePair kvp) {
+    public boolean insert(Entry entry) {
         if (this.isFull()) {
             // Flow of execution goes here when numPairs == maxNumPairs
             return false;
         } else {
-            // Insert key-value pair, increment numPairs, sort kvps
-            this.kvps[numPairs] = kvp;
+            // Insert entry, increment numPairs, sort entries
+            this.entries[numPairs] = entry;
             numPairs++;
-            Arrays.sort(this.kvps, 0, numPairs);
+            Arrays.sort(this.entries, 0, numPairs);
             return true;
         }
     }
@@ -62,11 +62,11 @@ public class LeafNode extends Node {
 
     /**
      * This simple method determines if the LeafNode object is capable of
-     * lending a key-value pair to a deficient leaf node. The LeafNode
-     * object can lend a key-value pair if its numPairs is greater than
+     * lending an entry to a deficient leaf node. The LeafNode
+     * object can lend an entry if its numPairs is greater than
      * the minimum number of pairs it can hold.
      * @return a boolean indicating whether or not the LeafNode object can
-     * give a key-value pair to a deficient leaf node
+     * give an entry to a deficient leaf node
      */
     public boolean isLendable() {
         return numPairs > minNumPairs;
@@ -86,34 +86,34 @@ public class LeafNode extends Node {
     /**
      * Constructor
      * @param m: order of B+ tree that is used to calculate maxNumPairs and minNumPairs
-     * @param kvp: first key-value pair inserted into new node
+     * @param entry: first entry inserted into new node
      */
-    public LeafNode(int m, KeyValuePair kvp) {
+    public LeafNode(int m, Entry entry) {
         super();
         this.maxNumPairs = m - 1;
         this.minNumPairs = (int) (Math.ceil(m / 2) - 1);
-        this.kvps = new KeyValuePair[m];
+        this.entries = new Entry[m];
         this.numPairs = 0;
-        this.insert(kvp);
+        this.insert(entry);
     }
 
     /**
      * Constructor
-     * @param kvps: list of KeyValuePair objects to be immediately inserted into new LeafNode object
+     * @param entries: list of Entry objects to be immediately inserted into new LeafNode object
      * @param m: order of B+ tree that is used to calculate maxNumPairs and minNumPairs
      * @param parent: parent of newly created child LeafNode
      */
-    public LeafNode(int m, KeyValuePair[] kvps, InternalNode parent) {
+    public LeafNode(int m, Entry[] entries, InternalNode parent) {
         super();
         this.maxNumPairs = m - 1;
         this.minNumPairs = (int) (Math.ceil(m / 2) - 1);
-        this.kvps = kvps;
-        this.numPairs = Utils.linearNullSearch(kvps);
+        this.entries = entries;
+        this.numPairs = Utils.linearNullSearch(entries);
         this.parent = parent;
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(kvps);
+        return Arrays.toString(entries);
     }
 }
