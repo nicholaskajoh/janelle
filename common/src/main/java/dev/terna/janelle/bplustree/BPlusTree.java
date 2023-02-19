@@ -12,6 +12,7 @@ import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.Factory;
 import guru.nidi.graphviz.model.Graph;
+import guru.nidi.graphviz.model.MutableNode;
 
 /**
  * Sauce: https://github.com/shandysulen/B-Plus-Tree.
@@ -294,7 +295,7 @@ public class BPlusTree implements Serializable {
 	 * @param key: the key to be searched within the B+ tree
 	 * @return the value associated with the key within the B+ tree
 	 */
-	public Long search(int key) {
+	public Long search(long key) {
 		// If B+ tree is completely empty, simply return null
 		if (isEmpty()) {
             return null;
@@ -554,12 +555,12 @@ public class BPlusTree implements Serializable {
      * Generate image of tree and write it to file.
      */
     public void visualize() {
-        class NodeAndFriends {
+        class AugmentedNode {
             Node node;
             String parentId;
             Node[] parentChildren;
 
-            NodeAndFriends(Node node, String parentId, Node[] parentChildren) {
+            AugmentedNode(Node node, String parentId, Node[] parentChildren) {
                 this.node = node;
                 this.parentId = parentId;
                 this.parentChildren = parentChildren;
@@ -570,23 +571,23 @@ public class BPlusTree implements Serializable {
             System.out.println("B+ tree empty. Nothing to visualize. :(");
         }
 
-        final Stack<NodeAndFriends> stack = new Stack<>();
-        final HashMap<String, guru.nidi.graphviz.model.MutableNode> gvNodes = new HashMap<>();
+        final Stack<AugmentedNode> stack = new Stack<>();
+        final HashMap<String, MutableNode> gvNodes = new HashMap<>();
 
         final Node startNode = root != null ? root : firstLeaf;
-        stack.push(new NodeAndFriends(startNode, null, null));
+        stack.push(new AugmentedNode(startNode, null, null));
         while (!stack.empty()) {
-            final var nodeaf = stack.pop();
-            final var gvNodeLabel = nodeaf.node.toString();
+            final var aNode = stack.pop();
+            final var gvNodeLabel = aNode.node.toString();
             final guru.nidi.graphviz.model.MutableNode gvNode = Factory.mutNode(gvNodeLabel).add(Shape.RECTANGLE);
-            gvNodes.put(nodeaf.node.id, gvNode);
+            gvNodes.put(aNode.node.id, gvNode);
 
-            if (nodeaf.parentId != null && nodeaf.parentChildren != null) {
-                final var gvParent = gvNodes.get(nodeaf.parentId);
+            if (aNode.parentId != null && aNode.parentChildren != null) {
+                final var gvParent = gvNodes.get(aNode.parentId);
                 var nodeIndexInParent = -1;
-                for (var i = 0; i < nodeaf.parentChildren.length; i++) {
-                    var child = nodeaf.parentChildren[i];
-                    if (child != null && child.id.equals(nodeaf.node.id)) {
+                for (var i = 0; i < aNode.parentChildren.length; i++) {
+                    var child = aNode.parentChildren[i];
+                    if (child != null && child.id.equals(aNode.node.id)) {
                         nodeIndexInParent = i;
                     }
                 }
@@ -594,17 +595,16 @@ public class BPlusTree implements Serializable {
                 gvParent.addLink(Factory.to(gvNode).with(Label.of(linkLabel)));
             }
 
-            if (nodeaf.node instanceof InternalNode) {
-                var internalNode = (InternalNode) nodeaf.node;
-                for (var child : internalNode.childPointers) {
+            if (aNode.node instanceof InternalNode internalNode) {
+				for (var child : internalNode.childPointers) {
                     if (child != null) {
-                        stack.push(new NodeAndFriends(child, internalNode.id, internalNode.childPointers));
+                        stack.push(new AugmentedNode(child, internalNode.id, internalNode.childPointers));
                     }
                 }
             }
         }
 
-        Graph graph = Factory.graph("bplustree").directed().with(gvNodes.values().stream().collect(Collectors.toList()));
+        Graph graph = Factory.graph("bplustree").directed().with(new ArrayList<>(gvNodes.values()));
         try {
             final var file = new File("viz/bplustree_" + vizFileSequence + ".png");
             Graphviz.fromGraph(graph)

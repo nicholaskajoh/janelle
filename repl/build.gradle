@@ -17,6 +17,7 @@ dependencies {
 }
 
 task buildRepl(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	manifest {
         attributes 'Main-Class': 'dev.terna.janelle.Repl'
     }

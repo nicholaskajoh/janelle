@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import dev.terna.janelle.bplustree.BPlusTree;
+import dev.terna.janelle.hash.SimpleHash;
 
 public class Table implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -76,6 +77,50 @@ public class Table implements Serializable {
     }
 
     /**
+     * Given a list of column names, find the first column with an index.
+     * Return null if none of the columns specified is indexed.
+     */
+    private Object[] findFirstIndexedColumn(String[] columnNames) {
+        for (var columnName : columnNames) {
+            final Column column = Stream.of(schema).filter(c -> c.getName().equals(columnName)).findFirst().get();
+            final var columnIndex = Arrays.asList(schema).indexOf(column);
+            final var indexTree = indexes[columnIndex];
+            if (indexTree != null) {
+                return new Object[] { columnName, indexTree };
+            }
+        }
+        return null;
+    }
+
+    private List<byte[][]> filterRows(Map<String, Object> queryMap) {
+        List<byte[][]> rows = new ArrayList<>();
+        List<Long> rowPointers = new ArrayList<>();
+
+        final var indexedColumn = findFirstIndexedColumn(queryMap.keySet().toArray(String[]::new));
+        if (indexedColumn == null) {
+            // No index available so we will scan all rows.
+            rowPointers = data.search(1, rowSequenceId);
+        } else {
+            // We have an index so use it to fetch rows to scan.
+            final var indexedColumnName = (String) indexedColumn[0];
+            final var indexTree = (BPlusTree) indexedColumn[1];
+            final var searchTerm = (String) queryMap.get(indexedColumnName);
+            final var searchTermHash = SimpleHash.hash(searchTerm);
+            final var rowIds = indexTree.search(searchTermHash, searchTermHash);
+
+            for (var rowId : rowIds) {
+
+            }
+        }
+
+        for (var rowPointer : rowPointers) {
+
+        }
+
+        return rows;
+    }
+
+    /**
      * Extract fields in row.
      */
     private byte[][] bytesToRow(byte[] bytes) {
@@ -97,7 +142,7 @@ public class Table implements Serializable {
     /**
      * Select range of rows.
      */
-    public List<byte[][]> select(long fromRow, long toRow) {
+    public List<byte[][]> selectRange(long fromRow, long toRow) {
         List<byte[][]> rows = new ArrayList<>();
 
         List<Long> rowPointers = data.search(fromRow, toRow);
@@ -111,7 +156,11 @@ public class Table implements Serializable {
     }
 
     public List<byte[][]> selectAll() {
-        return select(1, rowSequenceId);
+        return selectRange(1, rowSequenceId);
+    }
+
+    public List<byte[][]> selectWhere(Map<String, Object> queryMap) {
+        return null;
     }
 
     public void insert(Map<String, Object> newData) throws Exception {
@@ -142,20 +191,41 @@ public class Table implements Serializable {
             seekPosition = fileHandler.getEOFPointerForData();
         }
         if (seekPosition == 0) { // File is empty.
-            // First 4 bytes is for storing number of rows, so move forward by 4 bytes.
-            seekPosition = 4 * 8;
+            // First 8 bytes is for storing number of rows, so move forward by 8 bytes.
+            seekPosition = 8 * 8;
         }
         fileHandler.writeData(seekPosition, outputStream.toByteArray());
         
         // Update table size.
-        var numRowsBytes = fileHandler.readData(0, 4);
-        var numRows = ByteBuffer.wrap(numRowsBytes).getInt();
+        var numRowsBytes = fileHandler.readData(0, 8);
+        var numRows = ByteBuffer.wrap(numRowsBytes).getLong();
         numRows++;
-        numRowsBytes = ByteBuffer.allocate(4).putInt(numRows).array();
+        numRowsBytes = ByteBuffer.allocate(8).putLong(numRows).array();
         fileHandler.writeData(0, numRowsBytes);
 
         // Update B+ tree.
         data.insert(rowId, seekPosition);
         fileHandler.flushMetadata(this);
+    }
+
+    public void updateWhere(Map<String, Object> queryMap) {
+
+    }
+
+    public void deleteWhere(Map<String, Object> queryMap) {
+        
+    }
+
+    /**
+     * Get count of all records in the table.
+     * This is stored in the first 8 bytes of the data file.
+     */
+    public long countAll() {
+        final var numRowsBytes = fileHandler.readData(0, 8);
+        return ByteBuffer.wrap(numRowsBytes).getLong();
+    }
+
+    public long countWhere(Map<String, Object> filters) {
+        return 0L;
     }
 }

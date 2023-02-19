@@ -7,7 +7,7 @@ import java.util.Arrays;
 public enum DataType {
     INT(4, 4),
     FLOAT(4, 4),
-    STRING(1, 420), // Max is actually 419 because the first byte is used to store the length of the string.
+    STRING(2, 256), // Max chars is actually 255 because the first byte is used to store the length of the string.
     BOOL(1, 1),
     ;
 

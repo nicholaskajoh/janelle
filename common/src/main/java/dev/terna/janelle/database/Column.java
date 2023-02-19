@@ -34,7 +34,11 @@ public class Column implements Serializable {
     }
 
     public void setSize(int sizeInBytes) {
-        this.sizeInBytes = sizeInBytes;
+        if (dataType == DataType.STRING) {
+            this.sizeInBytes = sizeInBytes + 1; // Extra byte is for storing the length of the string.
+        } else {
+            this.sizeInBytes = sizeInBytes;
+        }
     }
 
     public DataType getDataType() {

@@ -6,6 +6,27 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch ParseTest",
+            "request": "launch",
+            "mainClass": "dev.terna.janelle.sql.ParseTest",
+            "projectName": "common"
+        },
+        {
+            "type": "java",
+            "name": "Launch TokenizeTest",
+            "request": "launch",
+            "mainClass": "dev.terna.janelle.sql.TokenizeTest",
+            "projectName": "common"
+        },
+        {
+            "type": "java",
+            "name": "Launch SQLTest",
+            "request": "launch",
+            "mainClass": "dev.terna.janelle.sql.SQLTest",
+            "projectName": "common"
+        },
+        {
+            "type": "java",
             "name": "Launch DatabaseTest",
             "request": "launch",
             "mainClass": "dev.terna.janelle.database.DatabaseTest",
