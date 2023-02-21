@@ -12,10 +12,6 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation project(':common')
-}
-
 task buildRepl(type: Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	manifest {

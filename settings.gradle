@@ -1,2 +1,2 @@
 rootProject.name = 'janelle'
-include('repl', 'common')
+include('client', 'server')
