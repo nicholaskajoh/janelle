@@ -1,4 +1,7 @@
-package dev.terna.janelle.database;
+package dev.terna.janelle.database.storage;
+
+import dev.terna.janelle.database.Table;
+import dev.terna.janelle.database.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,7 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 
-public class FileHandler {
+public class Disk implements StorageHandler {
     private static final String DATA_DIRECTORY = "data";
     private static final String FILE_EXTENSION = ".milan";
     public enum DataFile {
@@ -19,7 +22,7 @@ public class FileHandler {
     private RandomAccessFile dataFile;
     private String metadataFilePath;
 
-    public FileHandler(String tableName) {
+    public Disk(String tableName) {
         dataFilePath = getFilePath(tableName, DataFile.data);
         metadataFilePath = getFilePath(tableName, DataFile.metadata);
         setupFiles(tableName);
@@ -29,7 +32,7 @@ public class FileHandler {
         return DATA_DIRECTORY + File.separatorChar + tableName + File.separatorChar + dataFile.name() + FILE_EXTENSION;
     }
 
-    public void setupFiles(String tableName) {
+    private void setupFiles(String tableName) {
         File directory = new File(DATA_DIRECTORY + File.separatorChar + tableName);
         if (!directory.exists()) {
             directory.mkdirs();
@@ -55,6 +58,7 @@ public class FileHandler {
         }
     }
 
+    @Override
     public Table loadTable() {
         try {
             final var metadataFIS = new FileInputStream(metadataFilePath);
@@ -71,6 +75,7 @@ public class FileHandler {
     /**
      * Serialize and write table object to file.
      */
+    @Override
     public void flushMetadata(Table table) {
         try {
             final var metadataFOS = new FileOutputStream(metadataFilePath);
@@ -83,6 +88,7 @@ public class FileHandler {
         }
     }
 
+    @Override
     public long getEOFPointerForData() {
         try {
             return dataFile.length();
@@ -92,6 +98,7 @@ public class FileHandler {
         }
     }
 
+    @Override
     public byte[] readData(long seekPosition, int numberOfBytes) {
         try {
             dataFile.seek(seekPosition);
@@ -104,6 +111,7 @@ public class FileHandler {
         }
     }
 
+    @Override
     public void writeData(long seekPosition, byte[] data) {
         try {
             dataFile.seek(seekPosition);
@@ -113,7 +121,8 @@ public class FileHandler {
         }
     }
 
-    public void closeFiles() {
+    @Override
+    public void close() {
         try {
             dataFile.close();
         } catch (IOException e) {

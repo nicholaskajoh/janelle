@@ -1,5 +1,7 @@
 package dev.terna.janelle.database;
 
+import dev.terna.janelle.sql.Query;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -7,7 +9,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class Database {
-    private Map<String, Table> tables;
+    private final Map<String, Table> tables;
     public static final String DB_CONFIGS_TABLE_NAME = "jn_configs";
 
     public Database() {
@@ -21,7 +23,7 @@ public class Database {
         if (configsTable == null) {
             configsTable = createConfigsTable();
         }
-        final var rows = configsTable.selectAll(); // TODO: Try to use an index instead of scanning the whole table.
+        final var rows = configsTable.selectAll();
         final var schema = configsTable.getSchema();
         final var tableNames = getTableNames(rows, schema);
         
@@ -92,7 +94,6 @@ public class Database {
         // Initial configs
         final var tableNames = new String[] { DB_CONFIGS_TABLE_NAME };
         saveDbConfig(configsTable, "tables", String.join(",", tableNames));
-        saveDbConfig(configsTable, "debug", "Y");
 
         return configsTable;
     }
@@ -107,5 +108,39 @@ public class Database {
         } catch (Exception e) {
             Utils.panic("Failed to save item in config db.", e);
         }
+    }
+
+    public Result processQuery(Query query) throws Exception {
+        final var table = tables.get(query.getTable());
+        if (table == null) {
+            throw new Exception(String.format("Table %s does not exist.", query.getTable()));
+        }
+
+        switch (query.getStatement()) {
+            case CREATE -> {
+            }
+            case INSERT -> {
+            }
+            case SELECT -> {
+               return table.select(query.getColumns(), query.getWhereClause(), query.getOrderByClause(), query.getLimit());
+            }
+            case DESCRIBE -> {
+            }
+            case ALTER -> {
+            }
+            case UPDATE -> {
+            }
+            case DROP -> {
+            }
+            case DELETE -> {
+            }
+            case BEGIN -> {
+            }
+            case COMMIT -> {
+            }
+            case ROLLBACK -> {
+            }
+        }
+        return null;
     }
 }

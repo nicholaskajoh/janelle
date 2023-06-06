@@ -29,17 +29,10 @@ public class Parser {
             TokenType.ROLLBACK
     );
 
-    private static final Set<TokenType> functions = Set.of(
-            TokenType.COUNT,
-            TokenType.AVERAGE,
-            TokenType.SUM
-    );
-
     private static final Set<TokenType> parenthesis = Set.of(TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
 
     private static final Set<TokenType> validResultColumnTokens = new HashSet<>();
     static {
-        validResultColumnTokens.addAll(functions);
         validResultColumnTokens.add(TokenType.IDENTIFIER);
         validResultColumnTokens.add(TokenType.COMMA);
         validResultColumnTokens.addAll(parenthesis);
@@ -196,13 +189,6 @@ public class Parser {
 
                 final var identifier = parseIdentifier(set);
                 children.add(identifier);
-            } else if (functions.contains(firstTokenType)) {
-                if (tokenSets.size() > 1) {
-                    throw new Exception("Syntax error: A function must be the sole result column when used. Group-by queries not implemented.");
-                }
-
-                final var function = parseFunction(set);
-                children.add(function);
             } else if (firstTokenType == TokenType.ALL) {
                 if (tokenSets.size() > 1) {
                     throw new Exception("Syntax error: \"*\" must be the sole result column when used.");
@@ -228,26 +214,6 @@ public class Parser {
 
     private Node parseIdentifier(List<Token> tokens) {
         return new Node(NodeType.IDENTIFIER, tokens);
-    }
-
-    private Node parseFunction(List<Token> tokens) throws Exception {
-        final var function = new Node(NodeType.FUNCTION, tokens);
-        final var children = new ArrayList<Node>();
-
-        if (!(
-                tokens.size() == 4
-                && tokens.get(1).getTokenType() == TokenType.OPEN_PAREN
-                && (tokens.get(2).getTokenType() == TokenType.IDENTIFIER || tokens.get(2).getTokenType() == TokenType.ALL)
-                && tokens.get(3).getTokenType() == TokenType.CLOSE_PAREN
-        )) {
-            throw new Exception("Syntax error: Invalid function definition - " + tokens.get(0).getValue() + ".");
-        }
-
-        final var identifier = parseIdentifier(List.of(tokens.get(2)));
-        children.add(identifier);
-
-        function.setChildren(children);
-        return function;
     }
 
     private Node parseDropStatement(List<Token> tokens) {

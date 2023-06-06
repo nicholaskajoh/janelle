@@ -21,6 +21,10 @@ public class Node {
         return id;
     }
 
+    public NodeType getNodeType() {
+        return nodeType;
+    }
+
     List<Node> getChildren() {
         return children;
     }

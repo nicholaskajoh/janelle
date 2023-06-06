@@ -5,7 +5,7 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
 - __CLI:__ For connecting to and querying the DB.
 - __TCP Client & Server__: For communication between the CLI and DB server.
 - __SQL Parser:__ For parsing a flavor of SQL called NickSQL (pronounced _Nick's QL_). Generates abstract syntax trees for basic SQL queries (see _Queries_ section below for more info).
-- __B+ Tree:__ Data structure for DB tables and indexes.
+- __B+ Tree:__ Data structure for DB tables.
 - __Two-phase Locking:__ To facilitate transactions.
 
 ## Demo
@@ -65,18 +65,6 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
   delete from customers
   where email = "mi@la.no";
 
-  -- aggregate rows
-  select count(*)
-  from customers;
-
-  select average(voucher_balance)
-  from customers
-  where num_orders > 0;
-
-  select sum(num_orders)
-  from customers
-  where has_premium_plan is false;
-
   -- transactions
   begin;
 
@@ -92,8 +80,9 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
 
 ## Not implemented
 Things I'd have liked to implement:
-- Paging and a shared buffer (i.e in-memory cache) for minimizing disk hits and thus read-write latency.
-- Write-ahead log (WAL) and a checkpointer for crash recovery and data replication.
+- Indexes for faster reads.
+- Paging and a shared buffer (i.e. in-memory cache) for minimizing disk hits and thus read-write latency.
+- Write-ahead log (WAL) and a check-pointer for crash recovery and data replication.
 - Table joins.
 - Primary, foreign and unique key constraints.
-- Group-by aggregation.
+- Aggregates (like count, sum and average), and other functions.

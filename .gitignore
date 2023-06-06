@@ -2,7 +2,7 @@
 build
 bin
 
-viz/*
-!viz/.gitkeep
+server/viz/*
+!server/viz/.gitkeep
 
-data
+server/data

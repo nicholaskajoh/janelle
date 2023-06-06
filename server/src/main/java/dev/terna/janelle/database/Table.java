@@ -1,38 +1,49 @@
 package dev.terna.janelle.database;
- 
+
 import java.io.ByteArrayOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import dev.terna.janelle.bplustree.BPlusTree;
-import dev.terna.janelle.hash.SimpleHash;
+import dev.terna.janelle.database.storage.Disk;
+import dev.terna.janelle.database.storage.Memory;
+import dev.terna.janelle.database.storage.StorageHandler;
+import dev.terna.janelle.database.storage.StorageMedium;
+import dev.terna.janelle.sql.Order;
+import dev.terna.janelle.sql.Query;
+import dev.terna.janelle.sql.postfixexpression.Item;
 
 public class Table implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private String name;
-    private Column[] schema;
+    private final String name;
+    private final Column[] schema;
     private int rowSequenceId;
-    private int rowSizeInBytes;
-    private BPlusTree data;
-    private BPlusTree[] indexes;
-    private transient FileHandler fileHandler;
-    private List<Long> freeRowBlocks; // Pointers to deleted (thus free) row blocks in the db table file.
-    private static final transient String ROW_ID_COLUMN_NAME = "row_id";
+    private final int rowSizeInBytes;
+    private final BPlusTree data;
+    private transient StorageHandler storageHandler;
+    private final List<Long> freeRowBlocks; // Pointers to deleted (thus free) row blocks in the db table file.
+    private static final String ROW_ID_COLUMN_NAME = "row_id";
+
+    public Table(String name, Column[] schema) {
+        this(name, schema, StorageMedium.DISK);
+    }
     
-    private Table(String name, Column[] schema) {
+    private Table(String name, Column[] schema, StorageMedium storageMedium) {
        this.name = name;
        this.schema = schema;
        rowSequenceId = 0;
        rowSizeInBytes = Stream.of(schema).mapToInt(Column::getSize).sum();
        data = new BPlusTree(10);
-       indexes = new BPlusTree[schema.length];
        freeRowBlocks = new ArrayList<>();
-       fileHandler = new FileHandler(name);
+       switch (storageMedium) {
+           case DISK -> storageHandler = new Disk(name);
+           case MEMORY -> storageHandler = new Memory();
+       }
     }
 
     public static void create(String name, Column[] schema) {
@@ -40,19 +51,19 @@ public class Table implements Serializable {
         final var fullSchema = Stream.concat(Arrays.stream(new Column[] { rowId }), Arrays.stream(schema)).toArray(Column[]::new);
 
         final var table = new Table(name, fullSchema);
-        table.fileHandler.flushMetadata(table);
+        table.storageHandler.flushMetadata(table);
     }
 
     /**
      * Fetch table from disk.
      */
     public static Table load(String name) {
-        final var fileHandler = new FileHandler(name);
+        final var fileHandler = new Disk(name);
         final var table = fileHandler.loadTable();
         if (table == null) {
             return null;
         }
-        table.fileHandler = fileHandler;
+        table.storageHandler = fileHandler;
         return table;
     }
 
@@ -77,50 +88,6 @@ public class Table implements Serializable {
     }
 
     /**
-     * Given a list of column names, find the first column with an index.
-     * Return null if none of the columns specified is indexed.
-     */
-    private Object[] findFirstIndexedColumn(String[] columnNames) {
-        for (var columnName : columnNames) {
-            final Column column = Stream.of(schema).filter(c -> c.getName().equals(columnName)).findFirst().get();
-            final var columnIndex = Arrays.asList(schema).indexOf(column);
-            final var indexTree = indexes[columnIndex];
-            if (indexTree != null) {
-                return new Object[] { columnName, indexTree };
-            }
-        }
-        return null;
-    }
-
-    private List<byte[][]> filterRows(Map<String, Object> queryMap) {
-        List<byte[][]> rows = new ArrayList<>();
-        List<Long> rowPointers = new ArrayList<>();
-
-        final var indexedColumn = findFirstIndexedColumn(queryMap.keySet().toArray(String[]::new));
-        if (indexedColumn == null) {
-            // No index available so we will scan all rows.
-            rowPointers = data.search(1, rowSequenceId);
-        } else {
-            // We have an index so use it to fetch rows to scan.
-            final var indexedColumnName = (String) indexedColumn[0];
-            final var indexTree = (BPlusTree) indexedColumn[1];
-            final var searchTerm = (String) queryMap.get(indexedColumnName);
-            final var searchTermHash = SimpleHash.hash(searchTerm);
-            final var rowIds = indexTree.search(searchTermHash, searchTermHash);
-
-            for (var rowId : rowIds) {
-
-            }
-        }
-
-        for (var rowPointer : rowPointers) {
-
-        }
-
-        return rows;
-    }
-
-    /**
      * Extract fields in row.
      */
     private byte[][] bytesToRow(byte[] bytes) {
@@ -140,27 +107,75 @@ public class Table implements Serializable {
     }
 
     /**
-     * Select range of rows.
+     * Fetch a range of rows.
      */
-    public List<byte[][]> selectRange(long fromRow, long toRow) {
+    private List<byte[][]> fetchRange(long fromRow, long toRow) {
         List<byte[][]> rows = new ArrayList<>();
 
         List<Long> rowPointers = data.search(fromRow, toRow);
         for (var rowPointer : rowPointers) {
             final var seekPosition = (long) rowPointer;
-            final var bytes = fileHandler.readData(seekPosition, rowSizeInBytes);
+            final var bytes = storageHandler.readData(seekPosition, rowSizeInBytes);
             rows.add(bytesToRow(bytes));
         }
 
         return rows;
     }
 
-    public List<byte[][]> selectAll() {
-        return selectRange(1, rowSequenceId);
+    /**
+     * Filter out fields for unspecified columns in query.
+     */
+    private Object[] filterColumns(Object[] row, List<String> columnNames) {
+        if (columnNames.isEmpty()) {
+            // No columns specified so return all fields in the row.
+            return row;
+        }
+
+        List<Object> newRow = new ArrayList<>();
+        for (var columnName : columnNames) {
+            final var columnIndex = IntStream.range(0, schema.length)
+                    .filter(i -> schema[i].getName().equals(columnName))
+                    .findFirst()
+                    .orElseThrow();
+            newRow.add(row[columnIndex]);
+        }
+        return newRow.toArray();
     }
 
-    public List<byte[][]> selectWhere(Map<String, Object> queryMap) {
-        return null;
+    public Object[] deserializeRow(byte[][] row, Column[] schema) {
+        final var rowObject = new Object[row.length];
+        for (var fieldIndex = 0; fieldIndex < row.length; fieldIndex++) {
+            rowObject[fieldIndex] = schema[fieldIndex].getDataType().getData(row[fieldIndex]);
+        }
+        return rowObject;
+    }
+
+    public List<byte[][]> selectAll() {
+        return fetchRange(1, rowSequenceId); // TODO: Use Table#select.
+    }
+
+    public Result select(List<String> columns, List<Item> whereClause, LinkedHashMap<String, Order> orderByClause, long limit) {
+        List<byte[][]> serializedRows = fetchRange(1, rowSequenceId);
+        List<Object[]> rows = new ArrayList<>();
+        for (var serializedRow : serializedRows) {
+            var row = deserializeRow(serializedRow, schema);
+
+            // where filter
+
+            // order by filter
+
+            // limit filter
+
+            // columns filter
+            row = filterColumns(row, columns);
+
+            rows.add(row);
+        }
+
+        final var resultColumns = columns.isEmpty()
+                ? Arrays.stream(schema).map(Column::getName).toArray(String[]::new)
+                : columns.toArray(String[]::new);
+        return new Result(resultColumns, rows.toArray(Object[][]::new), this);
     }
 
     public void insert(Map<String, Object> newData) throws Exception {
@@ -178,9 +193,7 @@ public class Table implements Serializable {
             outputStream.write(fieldValueBytes);
         }
 
-        /**
-         * Write bytes to disk.
-         */
+         // Write bytes to disk.
         long seekPosition;
         // Check for free row blocks.
         if (freeRowBlocks.size() > 0) {
@@ -188,44 +201,36 @@ public class Table implements Serializable {
             freeRowBlocks.remove(0); // It's no longer free now.
         } else {
             // No free blocks? Go to end of file.
-            seekPosition = fileHandler.getEOFPointerForData();
+            seekPosition = storageHandler.getEOFPointerForData();
         }
         if (seekPosition == 0) { // File is empty.
             // First 8 bytes is for storing number of rows, so move forward by 8 bytes.
             seekPosition = 8 * 8;
         }
-        fileHandler.writeData(seekPosition, outputStream.toByteArray());
+        storageHandler.writeData(seekPosition, outputStream.toByteArray());
         
         // Update table size.
-        var numRowsBytes = fileHandler.readData(0, 8);
+        var numRowsBytes = storageHandler.readData(0, 8);
         var numRows = ByteBuffer.wrap(numRowsBytes).getLong();
         numRows++;
         numRowsBytes = ByteBuffer.allocate(8).putLong(numRows).array();
-        fileHandler.writeData(0, numRowsBytes);
+        storageHandler.writeData(0, numRowsBytes);
 
         // Update B+ tree.
         data.insert(rowId, seekPosition);
-        fileHandler.flushMetadata(this);
+        storageHandler.flushMetadata(this);
     }
 
-    public void updateWhere(Map<String, Object> queryMap) {
+    public void update(Query query) {}
 
-    }
-
-    public void deleteWhere(Map<String, Object> queryMap) {
-        
-    }
+    public void delete(Query query) {}
 
     /**
      * Get count of all records in the table.
      * This is stored in the first 8 bytes of the data file.
      */
     public long countAll() {
-        final var numRowsBytes = fileHandler.readData(0, 8);
+        final var numRowsBytes = storageHandler.readData(0, 8);
         return ByteBuffer.wrap(numRowsBytes).getLong();
-    }
-
-    public long countWhere(Map<String, Object> filters) {
-        return 0L;
     }
 }

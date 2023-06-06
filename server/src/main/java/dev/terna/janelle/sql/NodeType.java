@@ -7,5 +7,4 @@ public enum NodeType {
     IDENTIFIER,
     TABLE,
     COLUMNS,
-    FUNCTION,
 }
