@@ -7,4 +7,6 @@ public enum NodeType {
     IDENTIFIER,
     TABLE,
     COLUMNS,
+    WHERE_CLAUSE,
+    EXPRESSION,
 }

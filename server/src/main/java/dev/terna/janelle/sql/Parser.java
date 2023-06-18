@@ -1,5 +1,6 @@
 package dev.terna.janelle.sql;
 
+import dev.terna.janelle.sql.postfixexpression.Generator;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.engine.Format;
@@ -28,20 +29,64 @@ public class Parser {
             TokenType.COMMIT,
             TokenType.ROLLBACK
     );
-
-    private static final Set<TokenType> parenthesis = Set.of(TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
-
-    private static final Set<TokenType> validResultColumnTokens = new HashSet<>();
+    public static final Set<TokenType> PARENTHESES = Set.of(TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
+    private static final Set<TokenType> LITERALS = Set.of(
+            TokenType.INT_LITERAL,
+            TokenType.FLOAT_LITERAL,
+            TokenType.STRING_LITERAL,
+            TokenType.BOOL_LITERAL,
+            TokenType.NULL_LITERAL
+    );
+    public static final Set<TokenType> ADD_SUB_OPS = Set.of(TokenType.ADD_OP, TokenType.SUBTRACT_OP);
+    public static final Set<TokenType> MULT_DIV_OPS = Set.of(TokenType.MULTIPLY_OP, TokenType.DIVIDE_OP);
+    private static final Set<TokenType> ARITHMETIC_OPS = new HashSet<>();
     static {
-        validResultColumnTokens.add(TokenType.IDENTIFIER);
-        validResultColumnTokens.add(TokenType.COMMA);
-        validResultColumnTokens.addAll(parenthesis);
-        validResultColumnTokens.add(TokenType.ALL);
+        ARITHMETIC_OPS.addAll(ADD_SUB_OPS);
+        ARITHMETIC_OPS.addAll(MULT_DIV_OPS);
+    }
+    public static final Set<TokenType> COMPARISON_OPS = Set.of(
+            TokenType.EQUAL_OP,
+            TokenType.NOT_EQUAL_OP,
+            TokenType.GREATER_THAN_OP,
+            TokenType.GREATER_THAN_OR_EQUAL_OP,
+            TokenType.LESS_THAN_OP,
+            TokenType.LESS_THAN_OR_EQUAL_OP
+    );
+    public static final Set<TokenType> LOGICAL_OPS = Set.of(TokenType.AND, TokenType.OR);
+    public static final Set<TokenType> OPERATORS = new HashSet<>();
+    static {
+        OPERATORS.addAll(ARITHMETIC_OPS);
+        OPERATORS.addAll(COMPARISON_OPS);
+        OPERATORS.addAll(LOGICAL_OPS);
+        OPERATORS.addAll(PARENTHESES);
+    }
+    public static final Set<TokenType> OPERANDS = new HashSet<>();
+    static {
+        OPERANDS.addAll(LITERALS);
+        OPERANDS.add(TokenType.IDENTIFIER);
+    }
+
+    private static final Set<TokenType> VALID_RESULT_COLUMN_TOKENS = new HashSet<>();
+    static {
+        VALID_RESULT_COLUMN_TOKENS.add(TokenType.IDENTIFIER);
+        VALID_RESULT_COLUMN_TOKENS.add(TokenType.COMMA);
+        VALID_RESULT_COLUMN_TOKENS.addAll(PARENTHESES);
+        VALID_RESULT_COLUMN_TOKENS.add(TokenType.ALL);
+    }
+    public static final Set<TokenType> EXPRESSION_TOKENS = new HashSet<>();
+    static {
+        EXPRESSION_TOKENS.addAll(OPERANDS);
+        EXPRESSION_TOKENS.addAll(OPERATORS);
     }
 
     public Node parse(List<Token> tokens) throws Exception {
         if (tokens == null || tokens.isEmpty()) {
             throw new Exception("Syntax error: Empty query.");
+        }
+
+        // If statement does not end with a semicolon, add one.
+        if (tokens.get(tokens.size() - 1).getTokenType() != TokenType.SEMICOLON) {
+            tokens.add(new Token(TokenType.SEMICOLON, ";"));
         }
 
         abstractSyntaxTree = parseStatements(tokens);
@@ -112,11 +157,14 @@ public class Parser {
                 break;
             }
 
-            if (!validResultColumnTokens.contains(token.getTokenType())) {
+            if (!VALID_RESULT_COLUMN_TOKENS.contains(token.getTokenType())) {
                 throw new Exception("Syntax error: Invalid result column token - " + token.getValue() + ".");
             }
 
             resultColumnTokens.add(token);
+        }
+        if (resultColumnTokens.isEmpty()) {
+            throw new Exception("Syntax error: No result columns specified.");
         }
         final var columns = parseResultColumns(resultColumnTokens);
         children.add(columns);
@@ -138,16 +186,55 @@ public class Parser {
         children.add(table);
 
         // Get where clause tokens.
-        // WIP
+        final var whereClauseTokens = new ArrayList<Token>();
+        boolean hasWhereClause = false;
+        for (var token : select.getTokens()) {
+            if (token.getTokenType() == TokenType.WHERE && !hasWhereClause) { // Start
+                hasWhereClause = true;
+                continue;
+            }
+
+            if (!hasWhereClause) {
+                continue;
+            }
+
+            if (token.getTokenType() == TokenType.ORDER_BY || token.getTokenType() == TokenType.SEMICOLON) { // End
+                break;
+            }
+
+            if (!EXPRESSION_TOKENS.contains(token.getTokenType())) {
+                throw new Exception("Syntax error: Invalid where clause token - " + token.getValue() + ".");
+            }
+
+            whereClauseTokens.add(token);
+        }
+        if (!whereClauseTokens.isEmpty()) {
+            final var whereClause = parseWhereClause(whereClauseTokens);
+            children.add(whereClause);
+        }
 
         // Get order by tokens.
         // WIP
 
-        // Get limit tokens.
-        // Not implemented for now...
-
         select.setChildren(children);
         return select;
+    }
+
+    private Node parseWhereClause(List<Token> tokens) {
+        final var whereClause = new Node(NodeType.WHERE_CLAUSE, tokens);
+        final var children = new ArrayList<Node>();
+
+        final var expression = parseExpression(tokens);
+        children.add(expression);
+
+        whereClause.setChildren(children);
+        return whereClause;
+    }
+
+    private Node parseExpression(List<Token> tokens) {
+        final var generator = new Generator();
+        final var expression = generator.generate(tokens);
+        return new Node(NodeType.EXPRESSION, expression);
     }
 
     private Node parseResultColumns(List<Token> tokens) throws Exception {

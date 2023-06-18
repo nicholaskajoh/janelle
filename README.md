@@ -13,8 +13,10 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
 
 ## Setup
 - Clone repo.
-- Build `./gradlew buildRepl`.
-- Run `java -jar repl/build/libs/repl.jar`.
+- Build `./gradlew build`.
+- Run server `java -jar server/build/libs/server.jar`.
+- Run client `java -jar client/build/libs/client.jar`.
+- Run tests `./gradlew test`.
 
 ## Queries
 ```sql
@@ -53,7 +55,7 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
   -- read rows
   select name, email, num_orders
   from customers
-  where (num_orders > 0 and num_orders <= 5) or voucher_balance = 50.00 or (email = "ja@nel.le" and name is not null and has_premium_plan is true)
+  where (num_orders > 0 and num_orders <= 5) or voucher_balance = 50.00 or (email = "ja@nel.le" and name != null and has_premium_plan = true)
   order by num_orders desc;
 
   -- update rows
@@ -77,6 +79,7 @@ Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of
 - `.EXIT`: Exit CLI.
 - `.TABLES`: List tables in the DB.
 - `.COLUMNS`: List columns in a table with `.COLUMNS {table_name}` e.g `.COLUMNS jn_configs`.
+- `.GENERATE`: Create table and populate it with sample data. Usage - `.GENERATE {number_of_records}` e.g `.GENERATE 100`.
 
 ## Not implemented
 Things I'd have liked to implement:

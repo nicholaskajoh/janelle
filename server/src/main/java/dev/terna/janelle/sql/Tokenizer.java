@@ -9,13 +9,15 @@ public class Tokenizer {
     private int queryBufferEnd = 1;
     private final List<Token> tokens = new ArrayList<>();
 
-    private final Set<TokenType> numericLiterals = Set.of(TokenType.INT_LITERAL, TokenType.FLOAT_LITERAL);
-    private static final Map<String, TokenType> comparisonOps = new HashMap<>();
+    private static final Set<TokenType> NUMERIC_LITERALS = Set.of(TokenType.INT_LITERAL, TokenType.FLOAT_LITERAL);
+    private static final Map<String, TokenType> COMPARISON_OPS = new HashMap<>();
     static {
-        comparisonOps.put(">", TokenType.GREATER_THAN_OP);
-        comparisonOps.put("<", TokenType.LESS_THAN_OP);
-        comparisonOps.put(">=", TokenType.GREATER_THAN_OR_EQUAL_OP);
-        comparisonOps.put("<=", TokenType.LESS_THAN_OR_EQUAL_OP);
+        COMPARISON_OPS.put(">", TokenType.GREATER_THAN_OP);
+        COMPARISON_OPS.put("<", TokenType.LESS_THAN_OP);
+        COMPARISON_OPS.put(">=", TokenType.GREATER_THAN_OR_EQUAL_OP);
+        COMPARISON_OPS.put("<=", TokenType.LESS_THAN_OR_EQUAL_OP);
+        COMPARISON_OPS.put("=", TokenType.EQUAL_OP);
+        COMPARISON_OPS.put("!=", TokenType.NOT_EQUAL_OP);
     }
 
     public Tokenizer(String query) {
@@ -46,8 +48,6 @@ public class Tokenizer {
                     || tokenizeKeyword("^from$", TokenType.FROM)
                     || tokenizeKeyword("^to$", TokenType.TO)
                     || tokenizeKeyword("^into$", TokenType.INTO)
-                    || tokenizeKeyword("^is$", TokenType.IS)
-                    || tokenizeKeyword("^not$", TokenType.NOT)
                     || tokenizeKeyword("^table$", TokenType.TABLE)
                     || tokenizeKeyword("^column$", TokenType.COLUMN)
                     || tokenizeKeyword("^values$", TokenType.VALUES)
@@ -84,7 +84,6 @@ public class Tokenizer {
                     || tokenizeSpecialChars(")", TokenType.CLOSE_PAREN)
                     || tokenizeSpecialChars(";", TokenType.SEMICOLON)
                     || tokenizeSpecialChars(",", TokenType.COMMA)
-                    || tokenizeSpecialChars("=", TokenType.EQUAL)
 
                     || tokenizeKeyword("^(true|false)$", TokenType.BOOL_LITERAL)
                     || tokenizeKeyword("^null$", TokenType.NULL_LITERAL)
@@ -140,7 +139,7 @@ public class Tokenizer {
     }
 
     private boolean isNumber(Token tok) {
-        return numericLiterals.contains(tok.getTokenType());
+        return NUMERIC_LITERALS.contains(tok.getTokenType());
     }
 
     private boolean isIdentifier(Token tok) {
@@ -215,7 +214,7 @@ public class Tokenizer {
 
     private boolean tokenizeMinusOp() {
         final var queryBuffer = query.substring(queryBufferStart, queryBufferEnd);
-        if (!"=".equals(queryBuffer)) {
+        if (!"-".equals(queryBuffer)) {
             return false;
         }
 
@@ -230,17 +229,17 @@ public class Tokenizer {
 
     private boolean tokenizeComparisonOps() {
         final var queryBuffer = query.substring(queryBufferStart, queryBufferEnd);
-        if (!comparisonOps.containsKey(queryBuffer)) {
+        if (!COMPARISON_OPS.containsKey(queryBuffer)) {
             return false;
         }
 
         final var charRightOfQueryBufferIsEqualChar = queryBufferEnd < query.length() && query.charAt(queryBufferEnd) == '=';
-        if ((">".equals(queryBuffer) || "<".equals(queryBuffer))
+        if ((">".equals(queryBuffer) || "<".equals(queryBuffer) || "!".equals(queryBuffer))
                 && charRightOfQueryBufferIsEqualChar) {
             return false;
         }
 
-        tokens.add(new Token(comparisonOps.get(queryBuffer), queryBuffer));
+        tokens.add(new Token(COMPARISON_OPS.get(queryBuffer), queryBuffer));
         return true;
     }
 

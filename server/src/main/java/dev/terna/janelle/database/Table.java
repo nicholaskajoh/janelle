@@ -15,7 +15,8 @@ import dev.terna.janelle.database.storage.StorageHandler;
 import dev.terna.janelle.database.storage.StorageMedium;
 import dev.terna.janelle.sql.Order;
 import dev.terna.janelle.sql.Query;
-import dev.terna.janelle.sql.postfixexpression.Item;
+import dev.terna.janelle.sql.Token;
+import dev.terna.janelle.sql.postfixexpression.Evaluator;
 
 public class Table implements Serializable {
     @Serial
@@ -125,7 +126,7 @@ public class Table implements Serializable {
     /**
      * Filter out fields for unspecified columns in query.
      */
-    private Object[] filterColumns(Object[] row, List<String> columnNames) {
+    private Object[] columnsFilter(Object[] row, List<String> columnNames) {
         if (columnNames.isEmpty()) {
             // No columns specified so return all fields in the row.
             return row;
@@ -142,6 +143,22 @@ public class Table implements Serializable {
         return newRow.toArray();
     }
 
+    private boolean whereClauseFilter(Object[] row, List<Token> whereClause) {
+        final var variables = new HashMap<String, Object>();
+        for (var fieldIndex = 0; fieldIndex < schema.length; fieldIndex++) {
+            final var columnName = schema[fieldIndex].getName();
+            final var fieldValue = row[fieldIndex];
+            variables.put(columnName, fieldValue);
+        }
+
+        final var evaluator = new Evaluator(variables);
+        final var result = evaluator.evaluate(whereClause);
+        if (!(result instanceof Boolean)) {
+            throw new IllegalStateException("Useless where clause!!!");
+        }
+        return Boolean.parseBoolean(result.toString());
+    }
+
     public Object[] deserializeRow(byte[][] row, Column[] schema) {
         final var rowObject = new Object[row.length];
         for (var fieldIndex = 0; fieldIndex < row.length; fieldIndex++) {
@@ -154,20 +171,24 @@ public class Table implements Serializable {
         return fetchRange(1, rowSequenceId); // TODO: Use Table#select.
     }
 
-    public Result select(List<String> columns, List<Item> whereClause, LinkedHashMap<String, Order> orderByClause, long limit) {
+    public Result select(List<String> columns, List<Token> whereClause, LinkedHashMap<String, Order> orderByClause) {
         List<byte[][]> serializedRows = fetchRange(1, rowSequenceId);
         List<Object[]> rows = new ArrayList<>();
         for (var serializedRow : serializedRows) {
             var row = deserializeRow(serializedRow, schema);
 
             // where filter
+            if (!whereClause.isEmpty()) {
+                final var returnRow = whereClauseFilter(row, whereClause);
+                if (!returnRow) {
+                    continue;
+                }
+            }
 
             // order by filter
 
-            // limit filter
-
             // columns filter
-            row = filterColumns(row, columns);
+            row = columnsFilter(row, columns);
 
             rows.add(row);
         }

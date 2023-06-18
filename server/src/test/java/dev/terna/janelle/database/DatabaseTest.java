@@ -28,4 +28,28 @@ public class DatabaseTest {
         Utils.printQueryResult(result);
         result.getSource().getData().visualize();
     }
+
+    @Test
+    public void selectWhere() throws Exception {
+        final var db = new Database();
+        final var query = getQuery(String.format("select * from %s where key = \"tables\" and 1=1;", Database.DB_CONFIGS_TABLE_NAME));
+        final var result = db.processQuery(query);
+
+        Assertions.assertEquals(1, result.getRows().length);
+
+        Utils.printQueryResult(result);
+        result.getSource().getData().visualize();
+    }
+
+    @Test
+    public void selectWhereRowNotFound() throws Exception {
+        final var db = new Database();
+        final var query = getQuery(String.format("select * from %s where key = \"nonexistent\"", Database.DB_CONFIGS_TABLE_NAME));
+        final var result = db.processQuery(query);
+
+        Assertions.assertEquals(0, result.getRows().length);
+
+        Utils.printQueryResult(result);
+        result.getSource().getData().visualize();
+    }
 }

@@ -1,7 +1,6 @@
 package dev.terna.janelle.sql;
 
 import dev.terna.janelle.database.Column;
-import dev.terna.janelle.sql.postfixexpression.Item;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -13,9 +12,8 @@ public class Query {
     private List<String> columns;
     private List<Object[]> rows;
     private HashMap<Column, Column> schema; // new column -> old column (or null if there's no old column)
-    private List<Item> whereClause; // Postfix expression.
+    private List<Token> whereClause; // Postfix expression.
     private LinkedHashMap<String, Order> orderByClause; // column -> order
-    private long limit; // Zero means no limit.
 
     public Statement getStatement() {
         return statement;
@@ -57,11 +55,11 @@ public class Query {
         this.schema = schema;
     }
 
-    public List<Item> getWhereClause() {
+    public List<Token> getWhereClause() {
         return whereClause;
     }
 
-    public void setWhereClause(List<Item> whereClause) {
+    public void setWhereClause(List<Token> whereClause) {
         this.whereClause = whereClause;
     }
 
@@ -71,13 +69,5 @@ public class Query {
 
     public void setOrderByClause(LinkedHashMap<String, Order> orderByClause) {
         this.orderByClause = orderByClause;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(long limit) {
-        this.limit = limit;
     }
 }

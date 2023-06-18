@@ -10,12 +10,13 @@ public class Emitter {
         }
 
         final List<Query> queries = new ArrayList<>();
-        for (var child : ast.getChildren()) {
+        for (var statementNode : ast.getChildren()) {
             final var query = new Query();
 
-            query.setStatement(getStatement(child));
-            query.setTable(getTable(child));
-            query.setColumns(getColumns(child));
+            query.setStatement(getStatement(statementNode));
+            query.setTable(getTable(statementNode));
+            query.setColumns(getColumns(statementNode));
+            query.setWhereClause(getWhereClause(statementNode));
 
             queries.add(query);
         }
@@ -23,35 +24,53 @@ public class Emitter {
         return queries;
     }
 
-    private Statement getStatement(Node node) {
-        switch (node.getNodeType()) {
+    private Statement getStatement(Node statement) {
+        switch (statement.getNodeType()) {
             case SELECT -> {
                 return Statement.SELECT;
             }
             case DROP -> {
                 return Statement.DROP;
             }
-            default -> throw new IllegalStateException(node.getNodeType() + " node type is not a statement.");
+            default -> throw new IllegalStateException(statement.getNodeType() + " node type is not a statement.");
         }
     }
 
-    private String getTable(Node node) {
-        for (var child : node.getChildren()) {
-            if (child.getNodeType() == NodeType.TABLE) {
-                return child.getTokens().get(0).getValue();
+    private String getTable(Node statement) {
+        for (var statementChild : statement.getChildren()) {
+            if (statementChild.getNodeType() == NodeType.TABLE) {
+                return statementChild.getTokens().get(0).getValue();
             }
         }
         return null;
     }
 
-    private List<String> getColumns(Node node) {
-        for (var child : node.getChildren()) {
-            if (child.getNodeType() == NodeType.COLUMNS) {
-                return child.getTokens()
+    private List<String> getColumns(Node statement) {
+        for (var statementChild : statement.getChildren()) {
+            if (statementChild.getNodeType() == NodeType.COLUMNS) {
+                return statementChild.getTokens()
                         .stream()
                         .map(Token::getValue)
                         .filter(value -> !"*".equals(value))
                         .toList();
+            }
+        }
+        return List.of();
+    }
+
+    private List<Token> getWhereClause(Node statement) {
+        for (var statementChild : statement.getChildren()) {
+            if (statementChild.getNodeType() == NodeType.WHERE_CLAUSE) {
+                if (statementChild.getChildren().isEmpty()) {
+                    return List.of();
+                }
+
+                final var expression = statementChild.getChildren()
+                        .stream()
+                        .filter(node -> node.getNodeType() == NodeType.EXPRESSION)
+                        .findFirst()
+                        .orElseThrow();
+                return expression.getTokens();
             }
         }
         return List.of();

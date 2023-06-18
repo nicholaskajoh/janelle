@@ -122,7 +122,7 @@ public class Database {
             case INSERT -> {
             }
             case SELECT -> {
-               return table.select(query.getColumns(), query.getWhereClause(), query.getOrderByClause(), query.getLimit());
+               return table.select(query.getColumns(), query.getWhereClause(), query.getOrderByClause());
             }
             case DESCRIBE -> {
             }
