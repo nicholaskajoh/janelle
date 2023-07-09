@@ -45,7 +45,7 @@ public class Database {
             try {
                 key = (String) keyColumn.getDataType().getData(row[keyColumnIndex]);
             } catch (Exception e) {
-                Utils.panic("Error occured while fetching config db key column field.", e);
+                Utils.panic("Error occurred while fetching config db key column field.", e);
             }
             if ("tables".equals(key)) {
                 final Column valueColumn = Stream.of(schema).filter(c -> "value".equals(c.getName())).findFirst().get();
@@ -54,7 +54,7 @@ public class Database {
                 try {
                     value = (String) valueColumn.getDataType().getData(row[valueColumnIndex]);
                 } catch (Exception e) {
-                    Utils.panic("Error occured while fetching config db value column field.", e);
+                    Utils.panic("Error occurred while fetching config db value column field.", e);
                 }
                 tableNames = value.split(",");
                 break;

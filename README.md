@@ -2,20 +2,22 @@
 Janelle (pronounced *ya-nel*) is a toy SQL database written in Java. The goal of this project is to learn how databases work by building one.
 
 ## Features
-- __CLI:__ For connecting to and querying the DB.
-- __TCP Client & Server__: For communication between the CLI and DB server.
+- __CLI:__ User interface for querying the DB.
+- __Client & Server__: A simple TCP-based protocol for communication between the CLI and DB server.
 - __SQL Parser:__ For parsing a flavor of SQL called NickSQL (pronounced _Nick's QL_). Generates abstract syntax trees for basic SQL queries (see _Queries_ section below for more info).
 - __B+ Tree:__ Data structure for DB tables.
-- __Two-phase Locking:__ To facilitate transactions.
 
 ## Demo
 ...
 
+## Requirements
+Java 17+
+
 ## Setup
 - Clone repo.
-- Build `./gradlew build`.
-- Run server `java -jar server/build/libs/server.jar`.
-- Run client `java -jar client/build/libs/client.jar`.
+- Build `./gradlew build`. 
+- Run server `./gradlew runServer --console=plain`.
+- Run client `./gradlew runClient --console=plain`.
 - Run tests `./gradlew test`.
 
 ## Queries
@@ -89,3 +91,4 @@ Things I'd have liked to implement:
 - Table joins.
 - Primary, foreign and unique key constraints.
 - Aggregates (like count, sum and average), and other functions.
+- Transactions using two-phase locking.

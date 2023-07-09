@@ -1,8 +1,9 @@
 .gradle
 build
 bin
+out
 
 server/viz/*
 !server/viz/.gitkeep
 
-server/data
+data
