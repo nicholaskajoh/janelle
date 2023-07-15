@@ -1,28 +1,28 @@
 package dev.terna.janelle.database;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class Column implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private String name;
-    private DataType dataType;
-    private boolean isRequired;
-    private boolean isNullable;
-    private Object defaultValue;
+    private final String name;
+    private final DataType dataType;
+    private final boolean isRequired;
+    private final Object defaultValue;
     private int sizeInBytes;
 
-    public Column(String name, DataType dataType, boolean isRequired, boolean isNullable, Object defaultValue) {
+    public Column(String name, DataType dataType, boolean isRequired, Object defaultValue) {
         this.name = name;
         this.dataType = dataType;
         this.isRequired = isRequired;
-        this.isNullable = isNullable;
         this.defaultValue = defaultValue;
 
         sizeInBytes = dataType.getMaxSize();
     }
 
     public Column(String name, DataType dataType) {
-        this(name, dataType, false, true, null);
+        this(name, dataType, true, null);
     }
 
     public String getName() {
@@ -43,6 +43,18 @@ public class Column implements Serializable {
 
     public DataType getDataType() {
         return dataType;
+    }
+
+    public boolean isRequired() {
+        return isRequired;
+    }
+
+    public Object getDefaultValue() {
+        return defaultValue;
+    }
+
+    public int getSizeInBytes() {
+        return sizeInBytes;
     }
 
     public void validate(Object data) throws Exception {

@@ -83,9 +83,9 @@ public class Database {
      * Create table for storing db configs.
      */
     private Table createConfigsTable() {
-        final var keyColumn = new Column("key", DataType.STRING, true, false, null);
+        final var keyColumn = new Column("key", DataType.STRING);
         keyColumn.setSize(20);
-        final var valueColumn = new Column("value", DataType.STRING);
+        final var valueColumn = new Column("value", DataType.STRING, false, "");
         final var schema = new Column[] { keyColumn, valueColumn };
         createTable(DB_CONFIGS_TABLE_NAME, schema);
 
@@ -125,6 +125,7 @@ public class Database {
                return table.select(query.getColumns(), query.getWhereClause(), query.getOrderByClause());
             }
             case DESCRIBE -> {
+                return table.describe();
             }
             case ALTER -> {
             }
@@ -133,12 +134,6 @@ public class Database {
             case DROP -> {
             }
             case DELETE -> {
-            }
-            case BEGIN -> {
-            }
-            case COMMIT -> {
-            }
-            case ROLLBACK -> {
             }
         }
         return null;

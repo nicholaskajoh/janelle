@@ -26,9 +26,6 @@ public enum TokenType {
     DEFAULT,
     ASCENDING,
     DESCENDING,
-    BEGIN,
-    COMMIT,
-    ROLLBACK,
 
     // Functions
     COUNT,

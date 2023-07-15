@@ -35,7 +35,7 @@ Java 17+
   select *
   from customers;
 
-  describe table customers;
+  describe customers;
 
   -- update table
   alter table customers
@@ -68,17 +68,11 @@ Java 17+
   -- delete rows
   delete from customers
   where email = "mi@la.no";
-
-  -- transactions
-  begin;
-
-  commit;
-
-  rollback;
   ```
 
 ## CLI commands
 - `.EXIT`: Exit CLI.
+- `.PING`: Test connection to DB server.
 - `.TABLES`: List tables in the DB.
 - `.COLUMNS`: List columns in a table with `.COLUMNS {table_name}` e.g `.COLUMNS jn_configs`.
 - `.GENERATE`: Create table and populate it with sample data. Usage - `.GENERATE {number_of_records}` e.g `.GENERATE 100`.

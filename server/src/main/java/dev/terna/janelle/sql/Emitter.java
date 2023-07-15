@@ -32,6 +32,9 @@ public class Emitter {
             case DROP -> {
                 return Statement.DROP;
             }
+            case DESCRIBE -> {
+                return Statement.DESCRIBE;
+            }
             default -> throw new IllegalStateException(statement.getNodeType() + " node type is not a statement.");
         }
     }
@@ -39,7 +42,8 @@ public class Emitter {
     private String getTable(Node statement) {
         for (var statementChild : statement.getChildren()) {
             if (statementChild.getNodeType() == NodeType.TABLE) {
-                return statementChild.getTokens().get(0).getValue();
+                final var identifier = statementChild.getChildren().get(0);
+                return identifier.getTokens().get(0).getValue();
             }
         }
         return null;

@@ -48,7 +48,7 @@ public class Table implements Serializable {
     }
 
     public static void create(String name, Column[] schema) {
-        final var rowId = new Column(ROW_ID_COLUMN_NAME, DataType.INT, true, false, null);
+        final var rowId = new Column(ROW_ID_COLUMN_NAME, DataType.INT);
         final var fullSchema = Stream.concat(Arrays.stream(new Column[] { rowId }), Arrays.stream(schema)).toArray(Column[]::new);
 
         final var table = new Table(name, fullSchema);
@@ -253,5 +253,23 @@ public class Table implements Serializable {
     public long countAll() {
         final var numRowsBytes = storageHandler.readData(0, 8);
         return ByteBuffer.wrap(numRowsBytes).getLong();
+    }
+
+    public Result describe() {
+        final var resultColumns = new String[] {"name", "data_type", "is_required", "default_value", "size_in_bytes"};
+        final var rows = new Object[schema.length][];
+        for (var columnIndex = 0; columnIndex < schema.length; columnIndex++) {
+            final var column = schema[columnIndex];
+
+            rows[columnIndex] = new Object[] {
+                    column.getName(),
+                    column.getDataType(),
+                    column.isRequired(),
+                    column.getDefaultValue(),
+                    column.getSizeInBytes(),
+            };
+        }
+
+        return new Result(resultColumns, rows, this);
     }
 }

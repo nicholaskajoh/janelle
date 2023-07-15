@@ -9,7 +9,4 @@ public enum Statement {
     UPDATE,
     DROP,
     DELETE,
-    BEGIN,
-    COMMIT,
-    ROLLBACK,
 }

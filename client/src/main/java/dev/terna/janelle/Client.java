@@ -24,14 +24,15 @@ public class Client {
 
     public static void main(String[] args) throws IOException {
         System.out.println(janelleAsciiText);
-        System.out.println("Welcome to Janelle SQL database created by Nicholas Kajoh. \n Type a command/query or \".HELP\" for more info.");
+        System.out.println("Welcome to Janelle SQL database created by Nicholas Kajoh.\nType a command or query.");
 
-        Scanner scanner = new Scanner(System.in);
+        final var scanner = new Scanner(System.in);
+        var input = new Input();
+
         while (true) {
             System.out.print("> ");
             String line = scanner.nextLine();
 
-            final var input = new Input();
             final var done = input.parse(line);
 
             if (!done) {
@@ -56,11 +57,18 @@ public class Client {
                 switch (command) {
                     case EXIT -> exit = true;
 
-                    case HELP -> {
-
-                    }
-
                     case PING -> sendRequest(RequestType.PING, null);
+
+                    case TABLES -> sendRequest(RequestType.QUERY, "select value from jn_configs where key = \"tables\";");
+
+                    case COLUMNS -> {
+                        if (input.getCommand().length != 2) {
+                            System.out.println("Invalid format for command. Expected .COLUMNS {table_name} e.g .COLUMNS jn_configs.");
+                            continue;
+                        }
+                        final var tableName = input.getCommand()[1];
+                        sendRequest(RequestType.QUERY, String.format("describe %s;", tableName));
+                    }
                 }
 
                 if (exit) {
@@ -71,6 +79,8 @@ public class Client {
             } else {
                 System.out.println("Failed to parse input. :(");
             }
+
+            input = new Input();
         }
 
         System.out.println("Bye bye! :)");

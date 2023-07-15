@@ -24,10 +24,7 @@ public class Parser {
             TokenType.ALTER,
             TokenType.UPDATE,
             TokenType.DROP,
-            TokenType.DELETE,
-            TokenType.BEGIN,
-            TokenType.COMMIT,
-            TokenType.ROLLBACK
+            TokenType.DELETE
     );
     public static final Set<TokenType> PARENTHESES = Set.of(TokenType.OPEN_PAREN, TokenType.CLOSE_PAREN);
     private static final Set<TokenType> LITERALS = Set.of(
@@ -137,6 +134,9 @@ public class Parser {
             }
             case DROP -> {
                 return parseDropStatement(tokens);
+            }
+            case DESCRIBE ->  {
+                return parseDescribeStatement(tokens);
             }
             default -> throw new Exception("Parser error: Not implemented. Statement - " + statementType + ".");
         }
@@ -306,6 +306,18 @@ public class Parser {
     private Node parseDropStatement(List<Token> tokens) {
         // WIP
         return new Node(NodeType.DROP, tokens);
+    }
+
+    private Node parseDescribeStatement(List<Token> tokens) throws Exception {
+        if (!(tokens.size() == 2 && tokens.get(1).getTokenType() == TokenType.IDENTIFIER)) {
+            throw new Exception("Syntax error: Invalid describe statement.");
+        }
+
+        final var describe = new Node(NodeType.DESCRIBE, tokens);
+        final var table = parseTable(List.of(tokens.get(1)));
+        describe.setChildren(List.of(table));
+
+        return describe;
     }
 
     /**

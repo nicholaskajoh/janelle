@@ -76,7 +76,7 @@ public class RequestHandler implements Runnable {
     }
 
     public void sendResponse(ResponseCode responseCode, String content) throws IOException {
-        System.out.println("[" + new Date() + "] Response: " + responseCode.name() + " " + content);
+        System.out.println("[" + new Date() + "] Response: " + responseCode.name() + " \n" + content);
 
         final var bytes = new Response(responseCode, content).toByteArray();
         client.getOutputStream().write(bytes);

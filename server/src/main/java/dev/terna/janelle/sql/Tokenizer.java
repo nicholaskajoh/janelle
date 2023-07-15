@@ -59,9 +59,6 @@ public class Tokenizer {
                     || tokenizeKeyword("^or$", TokenType.OR)
                     || tokenizeKeyword("^asc$", TokenType.ASCENDING)
                     || tokenizeKeyword("^desc$", TokenType.DESCENDING)
-                    || tokenizeKeyword("^begin$", TokenType.BEGIN)
-                    || tokenizeKeyword("^commit$", TokenType.COMMIT)
-                    || tokenizeKeyword("^rollback$", TokenType.ROLLBACK)
 
                     || tokenizeKeyword("^count$", TokenType.COUNT)
                     || tokenizeKeyword("^average$", TokenType.AVERAGE)

@@ -3,7 +3,7 @@ package dev.terna.janelle;
 
 public class Input {
     private InputType type;
-    private String query;
+    private String query = "";
     private String[] command;
 
     public InputType getType() {
@@ -33,17 +33,17 @@ public class Input {
             return true;
         }
 
-        if (line.endsWith(";")) {
-            type = InputType.QUERY;
-            query = line;
-            return true;
-        }
-
         if (line.endsWith("\\")) {
             query += " " + line.substring(0, line.length() - 1);
         } else {
             query += " " + line;
         }
+
+        if (line.endsWith(";")) {
+            type = InputType.QUERY;
+            return true;
+        }
+
         return false;
     }
 }

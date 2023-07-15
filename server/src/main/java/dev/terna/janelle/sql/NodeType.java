@@ -9,4 +9,5 @@ public enum NodeType {
     COLUMNS,
     WHERE_CLAUSE,
     EXPRESSION,
+    DESCRIBE,
 }
